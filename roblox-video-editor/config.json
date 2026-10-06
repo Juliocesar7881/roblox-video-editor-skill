@@ -1,0 +1,11 @@
+{
+  "library_root": "assets/biblioteca-audio",
+  "language": "pt-BR",
+  "commercial_audio_required": true,
+  "minimum_shorts": 2,
+  "resolution_policy": "source-native-tier",
+  "fps_policy": "source-native",
+  "music_rotation_recent_exports": 8,
+  "target_loudness_lufs": -14,
+  "target_true_peak_dbtp": -1.5
+}
