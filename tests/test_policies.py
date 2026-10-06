@@ -1,4 +1,4 @@
-import json, subprocess, sys, tempfile, unittest
+import hashlib, json, subprocess, sys, tempfile, unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -24,6 +24,18 @@ class Policies(unittest.TestCase):
   self.assertTrue(all(r['license']=='CC BY 4.0' and r['attribution_required'] for r in full))
   self.assertTrue(all(r['download_url'].startswith('https://incompetech.com/') for r in full))
   self.assertFalse(any('fornecidas' in r['path'] or 'fornecidos' in r['path'] for r in rows))
+
+ def test_complete_bundled_library(self):
+  library=SKILL/'assets/biblioteca-audio'
+  rows=json.loads((library/'catalogo.json').read_text(encoding='utf-8'))['assets']
+  self.assertEqual(len(rows),185)
+  self.assertEqual(sum(r['license_status']=='unverified' for r in rows),107)
+  self.assertEqual(sum(r.get('commercial_allowed',False) for r in rows),78)
+  for row in rows:
+   with self.subTest(file=row['path']):
+    file=library/row['path']
+    self.assertTrue(file.is_file())
+    self.assertEqual(hashlib.sha256(file.read_bytes()).hexdigest(),row['sha256'])
 
  def test_rotation_counts_same_title_across_formats(self):
   with tempfile.TemporaryDirectory() as td:

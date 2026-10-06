@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 config.local.json
-roblox-video-editor/assets/biblioteca-audio/
 historico-musicas.json
 dist/
 .venv/

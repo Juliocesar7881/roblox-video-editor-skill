@@ -17,6 +17,6 @@ def main():
   subprocess.run([sys.executable,'-m','pip','install','--disable-pip-version-check','-r',str(repo/'requirements.txt')],check=True)
  shutil.copytree(repo/'roblox-video-editor',dest,dirs_exist_ok=True,ignore=shutil.ignore_patterns('__pycache__','*.pyc','config.local.json'))
  marker.write_text('Portable install; preserves local config and downloaded audio on updates.\n',encoding='utf-8')
- print(f'Skill instalada: {dest}\nNo Claude Code: /roblox-video-editor + caminho da gameplay.\nA biblioteca sera preparada no primeiro uso.')
+ print(f'Skill instalada: {dest}\nNo Claude Code: /roblox-video-editor + caminho da gameplay.\nA biblioteca de audio incluida acompanha a instalacao.')
 
 if __name__=='__main__':main()

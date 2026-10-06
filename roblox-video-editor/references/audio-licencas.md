@@ -9,12 +9,12 @@ Verificação inicial: 6 de outubro de 2026. O arquivo `biblioteca-audio/catalog
 | `efeitos/originais-livres` | ding, sucesso, erro, whoosh, impacto, boing sintetizados neste projeto | Sem samples de terceiros; uso comercial permitido |
 | `musicas/longos` | 36 gravações completas de Kevin MacLeod | CC BY 4.0 com crédito |
 | `musicas/curtos` | 36 trechos de aproximadamente 30–48 s dessas gravações | Mesma licença; indicar edição |
-| `musicas/longos/fornecidas` | 11 músicas pessoais copiadas sem alterações | Licença não comprovada; somente biblioteca local |
-| `musicas/curtos/fornecidas` | 11 trechos das músicas pessoais | Licença não comprovada; somente biblioteca local |
+| `musicas/longos/fornecidas` | 11 músicas pessoais copiadas sem alterações | Licença não comprovada |
+| `musicas/curtos/fornecidas` | 11 trechos das músicas pessoais | Licença não comprovada |
 
 As versões curtas são recortes com fade, não composições diferentes nem loops perfeitos. Ouça o ponto de repetição e use crossfade ou outra parte se necessário. Nos longos, alterne músicas conforme a cena; uma faixa cômica curta não precisa tocar repetida por vinte minutos.
 
-No pacote público, somente os 36 títulos licenciados (72 MP3) e os seis SFX originais são distribuídos/preparados automaticamente. A instalação pública não exige o pacote pessoal de quem criou a skill. A biblioteca local pode acrescentar os 85 efeitos e as 11 músicas pessoais, mas esses arquivos não entram no GitHub nem no ZIP público sem autorização verificável do titular. Nomes como Wii Party, New Donk City e Homage não constituem autorização para monetização ou redistribuição.
+O repositório/pacote completo inclui **todos os 185 áudios**, por solicitação expressa do usuário. A instalação copia a biblioteca inteira para a skill e funciona sem download adicional de música. O manifesto de recuperação mantém somente os 78 arquivos de origem verificada; o catálogo da biblioteca contém todos. A publicação dos 85 efeitos e das 11 músicas pessoais com 11 trechos não muda suas licenças: os 107 arquivos continuam marcados como não verificados, sem inferir permissão comercial ou de redistribuição. Nomes como Wii Party, New Donk City e Homage não constituem licença.
 
 ## Evitar repetição
 
