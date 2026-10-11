@@ -12,6 +12,8 @@
 | `K.CORES` | amarelo/azul royal/verde | Skin das referências. |
 | `K.ALTURA_RAIZ` / `ALTURA_SENTADO` / `ALTURA_DEITADO` | 3.41 / 1.32 / 0.95 | R15 medido: centro do HumanoidRootPart acima do chão (idle), do assento (sentar + pernas esticadas) e do chão deitado. `ELEVACAO_PASSO` corrige andar/correr. |
 | `K.ATRASO` | 0.8 | Segundos entre o flash magenta e o t=0 da timeline. |
+| `K.MARGEM_TOPO` | 0.075 | Faixa de cima do viewport cortada na gravação (igual a `captura_janela.processar`). |
+| `K.FAIXA_LEGENDA` | {0.665, 0.75} | Faixa do vídeo ocupada pela legenda karaokê; o rosto não pode ficar nela. |
 
 ## Montagem (modo edição, no `cenario.lua`)
 
@@ -42,7 +44,7 @@
 | `K.tremer(noob, t, amp)` / `K.poeira(pos, n)` | Tremedeira e nuvem de poeira. |
 | `K.camera.rosto(noob, dist, fovH, {lado=, altura=, queixo=, t=})` | Close pela cabeça real: cabeça no terço de cima. `t` faz travelling. |
 | `K.camera.corte(pos, alvo, fovH, cima)` / `K.camera.mover(pos, alvo, t, fovH, estilo, cima)` | Corte e travelling; `cima` define o "para cima" do quadro (ex.: `V(0,0,1)` para filmar de cima alguém deitado). |
-| `K.camera.seguir(parte, deslocamento, t)` | Segue mantendo o deslocamento. Cada corte novo cancela o movimento anterior. |
+| `K.camera.seguir(parte, deslocamento, t, mira)` | Segue mantendo o deslocamento e olhando para `parte + mira` (padrão `V(0, 1, 0)`). Seguindo `noob.Head`, use `mira = V(0, -1.5, 0)` (abaixo da cabeça): o rosto fica no terço de cima, fora da legenda. Cada corte novo cancela o movimento anterior. |
 | `K.camera.tremor(i, t)` / `K.camera.soco(i, t)` | Tremida e zoom-soco na própria câmera. |
 | `K.rodar(eventos, duracao)` | Esconde a interface, prepara o primeiro quadro (eventos com t ≤ 0), espera, mostra o flash magenta, dispara os eventos e, no fim, outro flash e `K.encerrar()` (o servidor do pipeline encerra o Play). |
 
@@ -53,5 +55,5 @@ Eventos com t ≤ 0 só preparam o primeiro quadro; movimento começa em t ≥ 0
 | Função | Uso |
 |---|---|
 | `K.auditar(noob)` | Colisões: partes do corpo dentro do chão/objetos, com tempo e peça (`[auditoria]`). |
-| `K.auditarCamera(noob, minimo)` | Regra nº 1: rosto pequeno, de costas, de perfil (> 0,5 s) ou fora do quadro (`[camera]`). |
+| `K.auditarCamera(noob, minimo)` | Regra nº 1, medida no quadro final 9:16 (`K.noVideo` refaz os cortes da gravação), logo depois da câmera em cada quadro: rosto pequeno, de costas, de perfil (> 0,5 s), fora do quadro, cortado na borda (> 0,2 s) ou na faixa da legenda (> 0,3 s) (`[camera]`). Com `K.AUDITORIA_DETALHE`, imprime `[camera-detalhe]` a cada 0,5 s (faixa do rosto e centro no vídeo). |
 | `K.inserto(true/false)` | Marca planos sem o protagonista (ex.: mostrar as opções). |

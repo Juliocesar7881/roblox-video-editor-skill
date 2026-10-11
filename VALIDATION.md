@@ -1,5 +1,10 @@
 # Validação antes da publicação
 
+## v1.6.0 (11 de outubro de 2026)
+
+- 27 testes passaram, incluindo: legendas do piloto sem sobreposição e sem destaque < 0,16 s; `revisar_legendas.py` acusando sobreposição, pisca, quebra em duas linhas e legenda junto com selo; rangido do `escorregar-trava` terminando aos 2,0 s e silêncio depois; a conta de posição da auditoria de câmera batendo (±1%) com um marcador processado de verdade por `captura_janela.processar`.
+- Piloto: `[auditoria] total 0`, `[camera] total 0` (rosto entre 0,30 e 0,49 da altura nas cenas de ação), `[legenda] total 0`; quadros revisados a cada 0,5 s e nas trocas de palavra; 1080×1920, 60 fps, −14,1 LUFS, pico −1,9 dBTP; atrito −17 LUFS contra falas de −11 a −13 LUFS; Whisper transcreve todas as falas (trecho a trecho).
+
 ## v1.5.0 (11 de outubro de 2026)
 
 - 23 testes passaram, incluindo legendas "uma ideia por vez" ("O VERMELHO," / "O AZUL..." / "OU O AMARELO GIGANTE?"; "ACHEI NA RUA," / "TODO ESSE OVO" / "PRA UM PINTINHO?!"), envelope da boca em áudio sintético e as APIs R15/auditorias.

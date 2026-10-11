@@ -17,6 +17,7 @@ LIB = SKILLS / 'roblox-video-editor' / 'assets' / 'biblioteca-audio'
 OV = (SKILLS / 'roblox-video-editor' / 'assets' / 'overlays').as_posix() + '/'
 BADGE = (SKILLS / 'roblox-shorts-animator' / 'assets').as_posix() + '/'
 CC = 'efeitos/capcut-convertidos/'
+OL = 'efeitos/originais-livres/'
 FX = {
     'whoosh': [CC + 'eem mp3-1.mp3', CC + 'eem mp3-4.mp3', CC + 'eem mp3-15.mp3', CC + 'eem mp3-5.mp3'],
     'pop': [CC + 'eem mp3-18.mp3', CC + 'eem mp3-24.mp3', CC + 'eem mp3-26.mp3', CC + 'eem mp3-19.mp3'],
@@ -27,14 +28,21 @@ FX = {
     'soco': [CC + 'em mp3-3.mp3', CC + 'em mp3-5.mp3'],
     'boing': [CC + 'eem mp3-68.mp3', CC + 'eem mp3-63.mp3'],
     'erro': [CC + 'eem mp3-57.mp3'],
+    'erro_curto': [OL + 'erro-original.mp3'],
     'apito': [CC + 'eem mp3-35.mp3'],
     'coracao': [CC + 'eem mp3-43.mp3'],
     'timpano': [CC + 'eem mp3-45.mp3'],
     'trombone': [CC + 'eem mp3-37.mp3'],
     'engracado': [CC + 'eem mp3-60.mp3'],
+    # Escorregador (sons originais da skill, sincronizados com K.deslizar): o "trava" para com um rangido
+    # exatamente 2,0 s depois do inicio; o "rapido" acelera por 2,2 s e solta o ar no lancamento.
+    'escorregar_trava': [OL + 'escorregar-trava.mp3'],
+    'escorregar_rapido': [OL + 'escorregar-rapido.mp3'],
+    'apito_desce': [OL + 'apito-escorregador.mp3'],
 }
 GAIN = {'whoosh': -10, 'pop': -11, 'clique': -11, 'ding': -11, 'impacto': -4, 'explosao': -5, 'soco': -6,
-        'boing': -9, 'erro': -10, 'apito': -11, 'coracao': -12, 'timpano': -8, 'trombone': -9, 'engracado': -11}
+        'boing': -9, 'erro': -10, 'apito': -11, 'coracao': -12, 'timpano': -8, 'trombone': -9, 'engracado': -11, 'erro_curto': -11,
+        'escorregar_trava': -11, 'escorregar_rapido': -10, 'apito_desce': -14}
 _uso = {}
 
 
@@ -63,6 +71,13 @@ def main():
     fim = T['fim']
 
     captions = legendas_karaoke(falas, ini)
+    # Nada de legenda junto com os selos da contagem (mesma faixa da tela): corta o que invadir.
+    c0, c1 = T['contagem'], T['contagem'] + 5
+    captions = [c for c in captions if not (c0 <= c['start'] < c1)]
+    for c in captions:
+        if c['start'] < c0 < c['end']:
+            c['end'] = round(c0, 3)
+            c['saida'] = True
     voice = [] if a.estimado else [{'file': f'falas/{F[i]["arquivo"]}', 'at': round(ini[i], 3), 'gain_db': 0} for i in ini]
     S, E, O = [], [], []
 
@@ -78,9 +93,11 @@ def main():
     for k, c in enumerate(T['cortes_opcoes']):
         S.append(sfx('whoosh', c, pitch=[1.0, 1.1, 0.9][k]))
         E.append({'type': 'flash', 'at': round(c, 3), 'color': 'branco', 'intensity': 0.35, 'duration': 0.08})
-    S.append(sfx('timpano', T['cortes_opcoes'][2] + 0.25))
+    # Rufar curto: termina antes de "Escolhe rapido!" (nenhum efeito por cima da fala).
+    t_tim = T['cortes_opcoes'][2] + 0.25
+    S.append(sfx('timpano', t_tim, dur=round(min(1.88, ini['03'] - t_tim), 3)))
     # "Escolhe rapido!" + contagem 5-4-3-2-1 com coracao acelerado.
-    S.append(sfx('whoosh', ini['03'] - 0.05))
+    S.append(sfx('whoosh', ini['03'] - 0.3, gain=-12, dur=0.35))  # pico no corte e some antes de "Escolhe"
     # Sem tremida na contagem (pedido): so o zoom-soco leve em cada numero.
     c0 = T['contagem']
     S.append(sfx('coracao', c0, dur=5.0))
@@ -93,9 +110,13 @@ def main():
     # Escolhe o vermelho e corre.
     S.append(sfx('pop', ini['04']))
     S.append(sfx('whoosh', T['corrida'] + 0.1, pitch=1.15))
-    # Desce o vermelho e trava.
-    S.append(sfx('whoosh', T['topo_vermelho'] + 0.1, pitch=0.85))
-    S.append(sfx('erro', T['trava']))
+    # Desce o vermelho (atrito no plastico) e trava com rangido de borracha bem no T['trava'].
+    S.append(sfx('escorregar_trava', T['trava'] - 2.0))
+    # "Ue... [bzt] travei?": o erro entra na pausa entre as duas palavras (o buzzer longo do CapCut,
+    # no instante da trava, cobria o "Ue").
+    w05 = F['05']['palavras']
+    bzt = ini['05'] + w05[0]['end'] + 0.02
+    S.append(sfx('erro_curto', bzt, dur=round(max(0.25, ini['05'] + w05[1]['start'] - bzt + 0.08), 3)))
     E.append({'type': 'zoom', 'at': round(T['trava'], 3), 'duration': 1.6, 'intensity': 0.12})
     O.append({'file': OV + 'interrogacao.png', 'at': round(T['trava'] + 0.1, 3), 'duration': 1.4, 'x': 0.62, 'y': 0.16, 'width': 0.3})
     S.append(sfx('engracado', ini['05'] + F['05']['duracao'] + 0.05))
@@ -105,13 +126,12 @@ def main():
     O.append({'file': OV + 'suor.png', 'at': round(ini['06'] + 0.3, 3), 'duration': 1.2, 'x': 0.6, 'y': 0.16, 'width': 0.28})
     S.append(sfx('whoosh', T['topo_amarelo'], pitch=1.1))
     S.append(sfx('pop', ini['07']))
-    # Descida, grito, voo com apito e pouso.
-    S.append(sfx('whoosh', T['descida'] + 0.05, pitch=0.9))
-    S.append(sfx('whoosh', T['descida'] + 1.1, pitch=1.2))
+    # Descida (atrito acelerando + ar no lancamento), grito, voo com apito descendo e pouso.
+    S.append(sfx('escorregar_rapido', T['voo'] - 2.2))
     # Velocidade na descida: tremida leve continua + zoom (sem linhas desenhadas por cima).
     E.append({'type': 'shake', 'at': round(T['descida'] + 0.2, 3), 'duration': 1.9, 'intensity': 0.35})
     E.append({'type': 'zoom', 'at': round(T['descida'] + 0.2, 3), 'duration': 1.9, 'intensity': 0.08})
-    S.append(sfx('apito', T['voo'] - 0.05, dur=1.65))
+    S.append(sfx('apito_desce', T['pouso'] - 1.42))
     E.append({'type': 'zoom', 'at': round(T['voo'], 3), 'duration': 1.4, 'intensity': 0.1})
     p = T['pouso']
     S.append(sfx('impacto', p))

@@ -3966,6 +3966,81 @@
       ],
       "onset_seconds": 0.006,
       "content_review": "classificado por modelo AudioSet (AST); sem fala detectada; escuta humana recomendada"
+    },
+    {
+      "path": "efeitos/originais-livres/escorregar-rapido.mp3",
+      "duration_seconds": 2.74,
+      "sha256": "d4cb872265806e2323056ae35ffe1dba127550cdeb1d86596a74faceecd2fb24",
+      "bytes": 46469,
+      "type": "sfx",
+      "origin": "original procedural synthesis",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "peak_db": -1.0,
+      "category": "escorregar",
+      "tags": [
+        "Slide",
+        "Scrape",
+        "Friction",
+        "Whoosh",
+        "rapido"
+      ]
+    },
+    {
+      "path": "efeitos/originais-livres/escorregar-trava.mp3",
+      "duration_seconds": 2.25,
+      "sha256": "2bd35c88a5747c77310e43c9f9a3e3ab257f58aa664e67b20e2635de94f79aa0",
+      "bytes": 41967,
+      "type": "sfx",
+      "origin": "original procedural synthesis",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "peak_db": -1.0,
+      "category": "escorregar",
+      "tags": [
+        "Slide",
+        "Scrape",
+        "Friction",
+        "Squeak",
+        "trava"
+      ]
+    },
+    {
+      "path": "efeitos/originais-livres/escorregar-curto.mp3",
+      "duration_seconds": 1.04,
+      "sha256": "73cc9d05f3c34c43dfa64eac4a71d642e5b7106049165c54fadddd8f9475fb1a",
+      "bytes": 18588,
+      "type": "sfx",
+      "origin": "original procedural synthesis",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "peak_db": -1.0,
+      "category": "escorregar",
+      "tags": [
+        "Slide",
+        "Scrape",
+        "Friction"
+      ]
+    },
+    {
+      "path": "efeitos/originais-livres/apito-escorregador.mp3",
+      "duration_seconds": 1.44,
+      "sha256": "88dc681c47bc1687505c066d048125a258f200a69b5be8ff99ab0632546516fb",
+      "bytes": 13587,
+      "type": "sfx",
+      "origin": "original procedural synthesis",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "peak_db": -1.0,
+      "category": "apito",
+      "tags": [
+        "Slide whistle",
+        "Cartoon"
+      ]
     }
   ]
 }

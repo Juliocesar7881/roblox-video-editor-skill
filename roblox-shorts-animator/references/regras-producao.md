@@ -13,7 +13,7 @@ Regras do sistema do amigo do usuário, adaptadas a esta skill. Valem para todo 
 - Cabeça com pelo menos 10% da altura do quadro (close 22–26%, plano médio 14%, aberto 10%), olhos no terço superior.
 - Câmera no máximo 45° fora do olhar do personagem; nunca de costas sem motivo narrativo. Calcular a câmera pela direção real da cabeça (`LookVector`), não por um deslocamento fixo no mundo.
 - Cada acontecimento importante termina num close de reação de pelo menos 1 s.
-- Objetos, efeitos e legendas não cobrem olhos e boca por mais de 0,3 s.
+- Objetos, efeitos e legendas não cobrem olhos e boca por mais de 0,3 s. A legenda karaokê ocupa ~0,665–0,72 da altura: o rosto inteiro (sobrancelha até o fim da boca de grito) fica acima disso. `K.auditarCamera` mede no quadro final (com os cortes da gravação) e acusa "rosto na faixa da legenda" e "rosto cortado na borda". Câmera seguindo (`cam.seguir`) mira **abaixo** da cabeça (`V(0, -1.5, 0)` no 4º argumento); mirando acima, o rosto desce para a legenda.
 - Planos sem o protagonista (mostrar as opções) são insertos curtos, marcados com `K.inserto(true)`.
 - `K.auditarCamera` precisa terminar com zero problemas, junto com `K.auditar` (colisões).
 
@@ -36,7 +36,8 @@ Regras do sistema do amigo do usuário, adaptadas a esta skill. Valem para todo 
 
 ## Montagem e som
 - Contador completo de 5 s depois de "Escolhe rápido!", com tique de relógio e música de puzzle durante a decisão; música animada na comemoração.
-- Efeito sonoro em toda ação (passo, pulo, whoosh, impacto, tombo), escolhido pelo acontecimento e com procedência registrada.
+- Efeito sonoro em toda ação (passo, pulo, whoosh, impacto, tombo), escolhido pelo acontecimento e com procedência registrada. Escorregar = som de atrito no plástico (`escorregar-trava`/`escorregar-rapido`), com o rangido/lançamento no instante exato da parada/saída.
+- Nenhum efeito por cima de fala: whoosh, rufar e buzzer terminam antes da palavra ou entram na pausa.
 - Não impor corte a cada 1–2 s; mover a câmera quando a história pedir.
 
 ## Imagem

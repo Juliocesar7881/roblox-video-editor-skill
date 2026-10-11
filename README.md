@@ -36,9 +36,9 @@ Peça uma ideia ("faz um de qual escorregador é o mais rápido") e o Claude ent
 - roteiro original, com as falas do noob na voz **Roger do ElevenLabs** (pela chave de API do usuário ou pelo site, com o usuário logado);
 - cena montada e animada no **Roblox Studio pela linha de comando oficial** (`-task RunScript`): sem MCP e sem cliques, numa janela própria do Studio que fecha sozinha;
 - noob R15 com a skin das referências (cabeça clássica grande, rosto de desenho com 11 expressões e boca que mexe com a voz), animado com os pacotes oficiais do Roblox (Cartoony, Levitation, emotes) e pisando sempre no chão certo;
-- auditorias automáticas de colisão e de câmera (rosto sempre visível) e regras de produção incorporadas de [eibrunoruan/roblox-shorts-generator](https://github.com/eibrunoruan/roblox-shorts-generator);
+- auditorias automáticas de colisão e de câmera (rosto sempre visível, nunca atrás da legenda) e regras de produção incorporadas de [eibrunoruan/roblox-shorts-generator](https://github.com/eibrunoruan/roblox-shorts-generator);
 - gravação **somente da janela do Studio** (Windows Graphics Capture), em 1080×1920 a 60 fps;
-- edição exagerada com a skill de edição: legendas palavra a palavra, contagem, efeitos sonoros, stickers e música.
+- edição exagerada com a skill de edição: legendas palavra a palavra revisadas automaticamente (`revisar_legendas.py`), contagem, efeitos sonoros (incluindo sons originais de escorregador), stickers e música.
 
 Requer Windows, Roblox Studio instalado e logado, e `pip install -r requirements.txt`. `faster-whisper` é opcional, usado para alinhar falas baixadas do site do ElevenLabs. Veja `roblox-shorts-animator/SKILL.md`.
 

@@ -6,7 +6,7 @@ Verificação inicial: 6 de outubro de 2026. O arquivo `biblioteca-audio/catalog
 |---|---|---|
 | `efeitos/fornecidos` | 16 MP3 indicados pelo usuário | Licença não comprovada |
 | `efeitos/capcut-convertidos` | 77 efeitos do CapCut (69 `eem mp3-*` + 8 `em mp3-*` de socos/impactos), categorizados | **Liberados**: declarados livres de direitos pelo proprietário do repositório em 7/10/2026 |
-| `efeitos/originais-livres` | ding, sucesso, erro, whoosh, impacto, boing sintetizados neste projeto | Sem samples de terceiros; uso comercial permitido |
+| `efeitos/originais-livres` | ding, sucesso, erro, whoosh, impacto, boing e os sons de escorregador (`escorregar-rapido`, `escorregar-trava`, `escorregar-curto`, `apito-escorregador`) sintetizados neste projeto | Sem samples de terceiros; uso comercial permitido |
 | `musicas/longos` | 36 gravações completas de Kevin MacLeod | CC BY 4.0 com crédito |
 | `musicas/curtos` | 36 trechos de aproximadamente 30–48 s dessas gravações | Mesma licença; indicar edição |
 | `musicas/longos/fornecidas` | 11 músicas pessoais copiadas sem alterações | Licença não comprovada |

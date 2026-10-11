@@ -54,16 +54,19 @@ def _norm_palavra(w):
     return re.sub(r'[^\wÀ-ÿ]', '', w.lower())
 
 
-def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, pausa=0.28):
+def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, pausa=0.28,
+                     minimo=0.16, pausa_destaque=0.1):
     """Estilo dos Shorts de referencia, "de pouco em pouco": cada grupo e uma ideia curta (quebra em
     virgula, reticencias, ? e !, e nunca termina em artigo/preposicao), some antes do proximo e,
     nas pausas da fala, a tela fica sem legenda. Dentro do grupo a palavra falada fica amarela
-    (numeros em ciano, NAO em coral). Uma caption por palavra; so a primeira do grupo tem 'entrada'."""
+    (numeros em ciano, NAO em coral). Os eventos de um grupo nunca se sobrepoem; o primeiro tem
+    'entrada' (entrada elastica) e o ultimo 'saida' (fade curto)."""
     def custo(pedaco):
         letras = sum(len(x['w']) for x in pedaco) + len(pedaco) - 1
         if len(pedaco) > max_palavras or (letras > max_letras and len(pedaco) > 1):
             return float('inf')
         c = 2.0 + 0.5 * (len(pedaco) - 3) ** 2  # prefere grupos de ~3 palavras e menos grupos
+        c += 0.5 * max(0, letras - 18)  # acima de ~18 letras a legenda teria de encolher
         if len(pedaco) > 1 and _norm_palavra(pedaco[-1]['w']) in FUNCAO:
             c += 10  # nunca terminar em "O", "NO", "OU"...
         if all(_norm_palavra(x['w']) in FUNCAO for x in pedaco):
@@ -105,16 +108,77 @@ def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, 
             fim_grupo = g[-1]['end'] + folga
             if gi + 1 < len(grupos):
                 fim_grupo = min(fim_grupo, grupos[gi + 1][0]['start'])
-            for wi, w in enumerate(g):
-                ini = w['start']
-                fim = g[wi + 1]['start'] if wi + 1 < len(g) else fim_grupo
-                texto = ' '.join(f'*{x["w"].upper()}*' if xi == wi else x['w'].upper() for xi, x in enumerate(g))
-                ativa = _norm_palavra(w['w'])
-                cor = 'ciano' if re.search(r'\d', ativa) else 'coral' if ativa in ('não', 'nao') else 'ouro'
-                caps.append({'start': round(base + ini, 3), 'end': round(base + max(fim, ini + 0.08), 3),
-                             'text': texto, 'style': 'karaoke', 'highlight': cor,
-                             **({'entrada': True} if wi == 0 else {})})
-    return caps
+            for ev in _eventos_do_grupo(g, fim_grupo, minimo, pausa_destaque):
+                caps.append({'start': round(base + ev['ini'], 3), 'end': round(base + ev['fim'], 3),
+                             'text': ev['texto'], 'style': 'karaoke', 'highlight': ev['cor'],
+                             **({'entrada': True} if ev['entrada'] else {}),
+                             **({'saida': True} if ev['saida'] else {})})
+    # Garantia final: nenhuma legenda invade a seguinte (duas ao mesmo tempo = linha duplicada).
+    caps.sort(key=lambda c: c['start'])
+    for a, b in zip(caps, caps[1:]):
+        if a['end'] > b['start']:
+            a['end'] = b['start']
+    return [c for c in caps if c['end'] - c['start'] >= 0.02]
+
+
+def _eventos_do_grupo(g, fim_grupo, minimo, pausa_destaque):
+    """Divide o tempo do grupo em eventos sem sobreposicao: em cada um, a(s) palavra(s) falada(s)
+    ficam amarelas; entre palavras (pausa) e depois da ultima, nenhuma fica (como na referencia).
+    Palavras faladas rapido demais (< minimo) sao destacadas junto com a vizinha, sem piscar."""
+    unidades = [[i] for i in range(len(g))]
+
+    def dur(u):
+        return g[u[-1]]['end'] - g[u[0]]['start']
+
+    while len(unidades) > 1:
+        curtos = [k for k, u in enumerate(unidades) if dur(u) < minimo]
+        if not curtos:
+            break
+        k = curtos[0]
+        if k + 1 < len(unidades) and (k == 0 or dur(unidades[k + 1]) <= dur(unidades[k - 1])):
+            j = k + 1
+        else:
+            j = k - 1
+        a, b = sorted((k, j))
+        unidades[a] = unidades[a] + unidades[b]
+        del unidades[b]
+
+    def texto(u):
+        partes = []
+        for i, w in enumerate(g):
+            p = w['w'].upper()
+            if u and i in u and (i - 1) not in u:
+                p = '*' + p
+            if u and i in u and (i + 1) not in u:
+                p = p + '*'
+            partes.append(p)
+        return ' '.join(partes)
+
+    def cor(u):
+        palavras = [_norm_palavra(g[i]['w']) for i in u]
+        if any(re.search(r'\d', p) for p in palavras):
+            return 'ciano'
+        if any(p in ('não', 'nao') for p in palavras):
+            return 'coral'
+        return 'ouro'
+
+    eventos = []
+    for k, u in enumerate(unidades):
+        ini = g[u[0]]['start'] if k else g[0]['start']
+        prox = g[unidades[k + 1][0]]['start'] if k + 1 < len(unidades) else fim_grupo
+        fim = min(g[u[-1]]['end'], prox)
+        if prox - fim < pausa_destaque:
+            fim = prox  # pausa curta: o destaque fica ate a proxima palavra (sem piscar branco)
+        if eventos and eventos[-1]['fim'] < ini:
+            eventos[-1]['fim'] = ini
+        eventos.append({'ini': ini, 'fim': fim, 'texto': texto(u), 'cor': cor(u)})
+        if fim < prox:
+            eventos.append({'ini': fim, 'fim': prox, 'texto': texto(None), 'cor': 'ouro'})
+    eventos = [e for e in eventos if e['fim'] - e['ini'] >= 0.02]
+    for i, e in enumerate(eventos):
+        e['entrada'] = i == 0
+        e['saida'] = i == len(eventos) - 1
+    return eventos
 
 def badges():
     from PIL import Image, ImageDraw, ImageFont

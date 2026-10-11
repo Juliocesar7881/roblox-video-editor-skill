@@ -1,5 +1,12 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.6.0 — legendas sem bugs, som de escorregador e rosto fora da legenda
+- Legendas karaokê corrigidas: nunca duas ao mesmo tempo (cada evento com posição fixa e sem sobreposição), palavras curtas acendem junto com a vizinha (nada de destaque piscando), pausas sem destaque, fade curto na saída, tamanho medido na referência.
+- Novo `roblox-video-editor/scripts/revisar_legendas.py`: renderiza só as legendas e aponta sobreposição, destaque piscando, legenda em duas linhas, texto cortado e legenda junto com sticker/selo. Obrigatório antes da versão final.
+- Sons originais de escorregador (`scripts/criar_sfx_escorregador.py`, sintetizados, uso comercial livre): `escorregar-trava` (atrito que para com rangido de borracha aos 2,0 s), `escorregar-rapido` (atrito acelerando + lufada no lançamento aos 2,2 s), `escorregar-curto` e `apito-escorregador` (apito de desenho descendo). Receita conferida com classificador AudioSet ("Scrape", "Squeak", "Whoosh").
+- Auditoria de câmera mede no quadro final (com os cortes da gravação), logo depois da câmera em cada quadro, e acusa "rosto na faixa da legenda" e "rosto cortado na borda"; `cam.seguir` aceita mira abaixo da cabeça.
+- Piloto corrigido: rosto no terço de cima na descida e no escorregador vermelho, pouso visto de cima com o rosto à mostra, legendas fora da contagem, efeitos fora das falas.
+
 ## v1.5.0 — regras do roblox-shorts-generator, pacote de animação e boca falando
 - Regras de produção do sistema de eibrunoruan/roblox-shorts-generator incorporadas (`references/regras-producao.md`): rosto como protagonista, colisões em 5 tempos, voz Roger com ID e idioma conferidos, contagem de 5 s, legendas, qualidade de imagem.
 - Noob em R15 com os pacotes oficiais do Roblox: Cartoony (locomoção), Levitation e emotes R15; cabeça clássica maior via `HeadScale`; suporte a juntas `AnimationConstraint`.

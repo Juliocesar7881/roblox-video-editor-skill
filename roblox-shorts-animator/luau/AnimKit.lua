@@ -18,6 +18,8 @@ AnimKit.ELEVACAO_PASSO = { andar = -0.15, correr = -0.19 } -- Cartoony: o pe de 
 AnimKit.ALTURA_DEITADO = 0.95 -- R15 deitado de costas sem animacao: centro acima do chao (medido 0.91)
 AnimKit.ATRASO = 0.8 -- segundos entre o flash magenta e o t=0 da timeline
 AnimKit.FOV = 50 -- campo de visao HORIZONTAL do video vertical final, em graus
+AnimKit.MARGEM_TOPO = 0.075 -- faixa de cima do viewport cortada na gravacao (= margem_topo do captura_janela.processar)
+AnimKit.FAIXA_LEGENDA = { 0.665, 0.75 } -- faixa do video (fracao da altura) das legendas karaoke (texto ~0,665-0,72)
 
 -- Skin das referencias: amarelo forte, azul royal e verde vivo.
 AnimKit.CORES = {
@@ -1056,15 +1058,39 @@ function AnimKit.inserto(ligado)
 	AnimKit._inserto = ligado and true or false
 end
 
--- Auditoria de camera (regra no 1: o rosto e o protagonista). 10 vezes por segundo mede a altura
--- da cabeca na tela (fracao da altura do video vertical) e o angulo entre a camera e o olhar.
--- Fora de insertos reporta: "rosto pequeno" (< minimo), "de costas" (> 100 graus), "de perfil"
--- (> 60 graus por mais de 0,5 s) e "rosto fora do quadro".
+-- Ponto do viewport -> posicao no video final (0..1 a partir da esquerda e de cima), refazendo o
+-- que captura_janela.processar faz: corta a faixa de cima do viewport (botoes do Roblox), desvira
+-- a camera deitada (transpose=2: a coluna da direita do viewport vira a linha de cima do video) e
+-- corta o 9:16 no centro. As auditorias medem no quadro que vai para o video, nao no viewport.
+local function noVideo(p, vp)
+	local corte = vp.Y * AnimKit.MARGEM_TOPO
+	local x, y, largo, alto
+	if AnimKit.VERTICAL then
+		x, y, largo, alto = p.Y - corte, vp.X - p.X, vp.Y - corte, vp.X
+	else
+		x, y, largo, alto = p.X, p.Y - corte, vp.X, vp.Y - corte
+	end
+	local tw, th = largo, alto
+	if alto * 9 >= largo * 16 then th = largo * 16 / 9 else tw = alto * 9 / 16 end
+	return (x - (largo - tw) / 2) / tw, (y - (alto - th) / 2) / th
+end
+AnimKit.noVideo = noVideo
+
+-- Auditoria de camera (regra no 1: o rosto e o protagonista). 10 vezes por segundo projeta a
+-- cabeca no quadro final e mede o tamanho dela (fracao da altura do video) e o angulo entre a
+-- camera e o olhar. Fora de insertos reporta: "rosto pequeno" (< minimo), "de costas" (> 100 graus),
+-- "de perfil" (> 60 graus por mais de 0,5 s), "rosto fora do quadro", "rosto cortado na borda"
+-- (parte da cabeca fora do 9:16 por mais de 0,2 s) e "rosto na faixa da legenda" (olhos/boca atras
+-- das legendas por mais de 0,3 s: a regra e rosto no terco de cima; mire abaixo da cabeca).
 function AnimKit.auditarCamera(noob, minimo)
 	minimo = minimo or 0.08
 	local abertos, achados = {}, {}
 	local prox = 0
-	local con = RunService.Heartbeat:Connect(function()
+	-- Mede logo depois da camera do kit (prioridade Camera + 1) no mesmo quadro: no Heartbeat a camera
+	-- ainda estaria um quadro atrasada e, com o Studio em segundo plano (poucos FPS), um noob rapido
+	-- pareceria fora do lugar.
+	local NOME = "AnimKitAuditoriaCamera"
+	RunService:BindToRenderStep(NOME, Enum.RenderPriority.Camera.Value + 2, function()
 		local t = AnimKit.tempo()
 		if t < 0 or os.clock() < prox then return end
 		prox = os.clock() + 0.1
@@ -1073,26 +1099,52 @@ function AnimKit.auditarCamera(noob, minimo)
 			local cam = workspace.CurrentCamera
 			local h = noob.Head
 			local vp = cam.ViewportSize
-			local alto = AnimKit.VERTICAL and vp.X or vp.Y
-			local largo = AnimKit.VERTICAL and vp.Y or vp.X
-			local topo, okTopo = cam:WorldToViewportPoint((h.CFrame * CFrame.new(0, h.Size.Y / 2, 0)).Position)
-			local base, okBase = cam:WorldToViewportPoint((h.CFrame * CFrame.new(0, -h.Size.Y / 2, 0)).Position)
-			local centro, okCentro = cam:WorldToViewportPoint(h.Position)
+			local function video(cf)
+				local p, naFrente = cam:WorldToViewportPoint(cf.Position)
+				local x, y = noVideo(p, vp)
+				return Vector2.new(x, y), naFrente
+			end
+			local function dentro(p, folga)
+				return p.X >= -folga and p.X <= 1 + folga and p.Y >= -folga and p.Y <= 1 + folga
+			end
+			-- Distancia no video medida em alturas do quadro (x e y sao normalizados por lados diferentes).
+			local function emAltura(a, b)
+				return Vector2.new((a.X - b.X) * 9 / 16, a.Y - b.Y).Magnitude
+			end
+			local s = h.Size / 2
+			local centro, naFrente = video(h.CFrame)
+			local topo, base = video(h.CFrame * CFrame.new(0, s.Y, 0)), video(h.CFrame * CFrame.new(0, -s.Y, 0))
+			local esq, dir = video(h.CFrame * CFrame.new(-s.X, 0, 0)), video(h.CFrame * CFrame.new(s.X, 0, 0))
 			-- Maior lado da cabeca na tela (altura ou largura): numa cambalhota/rolamento a cabeca fica
 			-- de lado e so a altura subestimaria o tamanho do rosto.
-			local esq = cam:WorldToViewportPoint((h.CFrame * CFrame.new(-h.Size.X / 2, 0, 0)).Position)
-			local dir = cam:WorldToViewportPoint((h.CFrame * CFrame.new(h.Size.X / 2, 0, 0)).Position)
-			local fracao = math.max((Vector2.new(topo.X, topo.Y) - Vector2.new(base.X, base.Y)).Magnitude,
-				(Vector2.new(esq.X, esq.Y) - Vector2.new(dir.X, dir.Y)).Magnitude) / alto
+			local fracao = math.max(emAltura(topo, base), emAltura(esq, dir))
 			local paraCamera = (cam.CFrame.Position - h.Position).Unit
 			local ang = math.deg(math.acos(math.clamp(h.CFrame.LookVector:Dot(paraCamera), -1, 1)))
-			if not okCentro or centro.X < 0 or centro.Y < 0 or centro.X > vp.X or centro.Y > vp.Y then
+			if not naFrente or not dentro(centro, 0) then
 				agora["rosto fora do quadro"] = true
 			else
+				if not (dentro(topo, 0.01) and dentro(base, 0.01) and dentro(esq, 0.01) and dentro(dir, 0.01)) then
+					agora["rosto cortado na borda"] = true
+				end
 				if fracao < minimo then agora[string.format("rosto pequeno (< %d%%)", minimo * 100)] = true end
 				if ang > 100 then agora["de costas"] = true elseif ang > 60 then agora["de perfil"] = true end
+				-- Desenho do rosto inteiro (a placa: sobrancelhas ate o fim da boca de grito) contra a faixa
+				-- das legendas, com folga para o zoom que a edicao aplica nas cenas de acao.
+				local placa = noob:FindFirstChild("RostoPlaca")
+				if placa and ang <= 100 then
+					local m = placa.Size.Y / 2
+					local a, b = video(placa.CFrame * CFrame.new(0, m, 0)), video(placa.CFrame * CFrame.new(0, -m, 0))
+					local f0, f1 = AnimKit.FAIXA_LEGENDA[1], AnimKit.FAIXA_LEGENDA[2]
+					if math.max(a.Y, b.Y) > f0 and math.min(a.Y, b.Y) < f1 then
+						agora["rosto na faixa da legenda"] = true
+					end
+					if AnimKit.AUDITORIA_DETALHE and t >= (AnimKit._proxDetalheCam or 0) then
+						AnimKit._proxDetalheCam = t + 0.5
+						print(string.format("[camera-detalhe] %.2fs rosto %.3f-%.3f centro %.3f,%.3f tamanho %.3f viewport %dx%d",
+							t, math.min(a.Y, b.Y), math.max(a.Y, b.Y), centro.X, centro.Y, fracao, vp.X, vp.Y))
+					end
+				end
 			end
-			local _ = largo
 		end
 		for chave in pairs(agora) do
 			if not abertos[chave] then abertos[chave] = { t, t } else abertos[chave][2] = t end
@@ -1107,15 +1159,17 @@ function AnimKit.auditarCamera(noob, minimo)
 	local anterior = AnimKit._relatorio
 	AnimKit._relatorio = function()
 		if anterior then anterior() end
-		con:Disconnect()
+		RunService:UnbindFromRenderStep(NOME)
 		for chave, faixa in pairs(abertos) do
 			achados[#achados + 1] = { chave = chave, a = faixa[1], b = faixa[2] }
 		end
 		table.sort(achados, function(x, y) return x.a < y.a end)
 		local n = 0
+		-- Passagens curtas nao contam (virar a cabeca, cruzar a faixa da legenda num movimento);
+		-- costas e rosto fora contam sempre. Amostras a cada 0,1 s: b - a mede a duracao menos 0,1 s.
+		local curto = { ["de perfil"] = 0.5, ["rosto na faixa da legenda"] = 0.3, ["rosto cortado na borda"] = 0.2 }
 		for _, f in ipairs(achados) do
-			-- Perfil curto (virar a cabeca) nao conta; costas e rosto fora contam sempre.
-			if not (f.chave == "de perfil" and f.b - f.a < 0.5) then
+			if f.b - f.a + 0.1 > (curto[f.chave] or 0) then
 				n += 1
 				print(string.format("[camera] %.2f-%.2fs %s", f.a, f.b, f.chave))
 			end

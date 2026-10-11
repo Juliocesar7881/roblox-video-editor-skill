@@ -64,7 +64,7 @@ WrapStyle: 0
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
 Style: fala,Arial,{fs},&H00FFFFFF,&H000000FF,&H00101010,&H60000000,-1,0,0,0,100,100,0,0,1,{max(3,round(fs*.06))},1,2,{int(w*.12)},{int(w*.16)},{int(h*.23)},1
 Style: legenda,Arial Black,{round(fs*1.5)},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(fs*.11))},{max(2,round(fs*.05))},2,{int(w*.07)},{int(w*.07)},{int(h*.3)},1
-Style: karaoke,Lilita One,{round(w*.104 if h > w else h*.094)},&H00FFFFFF,&H000000FF,&H003E2810,&H003E2810,0,0,0,0,100,100,0,0,1,{max(4,round((w*.104 if h > w else h*.094)*.062))},0,2,{int(w*.06)},{int(w*.06)},{int(h*.285)},1
+Style: karaoke,Lilita One,{round(w*.089 if h > w else h*.08)},&H00FFFFFF,&H000000FF,&H003E2810,&H003E2810,0,0,0,0,100,100,0,0,1,{max(4,round((w*.089 if h > w else h*.08)*.075))},0,2,0,0,0,1
 Style: grito,Arial Black,{big},{COLORS['amarelo']},&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(5,round(big*.09))},{max(2,round(big*.05))},5,{int(w*.06)},{int(w*.06)},0,1
 Style: titulo,Arial Black,{top},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(top*.08))},{max(2,round(top*.04))},8,{int(w*.08)},{int(w*.08)},{int(h*.1)},1
 Style: Preview,Arial,{int(fs*.5)},&H0060FFFF,&H000000FF,&H00101010,&H60000000,0,0,0,0,100,100,0,0,1,2,0,8,10,10,10,1
@@ -88,26 +88,39 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
         if highlight not in COLORS:
             raise ValueError(f'caption.highlight deve ser um de {sorted(COLORS)}')
         if style == 'karaoke':
-            # Reference style: the group stays, the spoken word turns yellow; the group fades in once.
-            # Receita das referencias: sombra deslocada para baixo e entrada elastica de cada grupo.
-            sombra = r'\xshad' + str(max(1, round(w * .002))) + r'\yshad' + str(max(2, round(w * .0068)))
-            # Encolhe o grupo quando ele nao cabe em 86% da largura (fonte medida de verdade).
-            esc = 100
+            # Receita dos Shorts de referencia (roblox-shorts-generator): Lilita One branca, contorno e
+            # sombra #10283E deslocada para baixo, palavra falada colorida, grupos de ate 2 palavras
+            # ~10% maiores, entrada elastica 83% -> 104% -> 100% em 0,22 s subindo um pouco, fade de
+            # 45 ms na entrada e 75 ms na saida do grupo.
+            sombra = r'\xshad' + str(max(1, round(w * .002))) + r'\yshad' + str(max(2, round(w * .0065)))
+            palavras = len(str(c['text']).replace('*', '').split())
+            esc = 110 if palavras <= 2 else 100
             try:
                 from PIL import ImageFont
-                tam = round(w * .104 if h > w else h * .094)
+                tam = round(w * .089 if h > w else h * .08)
                 fonte = ImageFont.truetype(str(FONTES / 'LilitaOne-Regular.ttf'), tam)
                 # 0.87: o libass desenha a fonte menor que o PIL no mesmo tamanho (medido).
-                largura = 0.87 * fonte.getlength(str(c['text']).replace('*', '').upper())
-                esc = min(100, round(100 * .86 * w / max(1, largura)))
+                largura = 0.87 * fonte.getlength(str(c['text']).replace('*', '').upper()) * esc / 100
+                if largura > .86 * w:
+                    esc = round(esc * .86 * w / largura)
             except (ImportError, OSError):
                 pass
+            # Posicao fixa: eventos posicionados nunca sao empilhados pelo libass (sem linha duplicada).
+            x, y = round(w / 2), round(h * .722 if h > w else h * .86)
             if c.get('entrada'):
-                entrada = (rf'\fscx{round(esc * .62)}\fscy{round(esc * .62)}\t(0,90,\fscx{round(esc * 1.12)}\fscy{round(esc * 1.12)})'
-                           rf'\t(90,180,\fscx{esc}\fscy{esc})')
+                pos = rf'\move({x},{y + round(w * .011)},{x},{y},0,120)'
+                entrada = (rf'\fscx{round(esc * .83)}\fscy{round(esc * .83)}'
+                           rf'\t(0,60,\fscx{round(esc * 1.016)}\fscy{round(esc * 1.016)})'
+                           rf'\t(60,105,\fscx{round(esc * 1.035)}\fscy{round(esc * 1.035)})'
+                           rf'\t(105,160,\fscx{round(esc * 1.004)}\fscy{round(esc * 1.004)})'
+                           rf'\t(160,220,\fscx{esc}\fscy{esc})')
             else:
+                pos = rf'\pos({x},{y})'
                 entrada = rf'\fscx{esc}\fscy{esc}'
-            animation = '{' + sombra + entrada + tag + '}'
+            fade = ''
+            if c.get('entrada') or c.get('saida'):
+                fade = rf'\fad({45 if c.get("entrada") else 0},{75 if c.get("saida") else 0})'
+            animation = '{' + pos + sombra + fade + entrada + tag + '}'
             highlight = c.get('highlight', 'ouro')
         elif style == 'legenda':
             # Word-by-word captions: quick pop and no fade, so consecutive words feel snappy.

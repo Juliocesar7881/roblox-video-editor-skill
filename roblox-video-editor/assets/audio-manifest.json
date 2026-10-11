@@ -1656,6 +1656,54 @@
       "attribution_required": true,
       "attribution": "\"The Cannery\" — Kevin MacLeod (incompetech.com)\nFonte: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100845\nLicenca: Creative Commons Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/\nAlteracoes: trechos, fades, cortes, ajuste de volume e sincronizacao com video.\n",
       "excerpt_start": 4
+    },
+    {
+      "path": "efeitos/originais-livres/escorregar-rapido.mp3",
+      "duration_seconds": 2.74,
+      "sha256": "d4cb872265806e2323056ae35ffe1dba127550cdeb1d86596a74faceecd2fb24",
+      "bytes": 46469,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/escorregar-rapido.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/escorregar-trava.mp3",
+      "duration_seconds": 2.25,
+      "sha256": "2bd35c88a5747c77310e43c9f9a3e3ab257f58aa664e67b20e2635de94f79aa0",
+      "bytes": 41967,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/escorregar-trava.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/escorregar-curto.mp3",
+      "duration_seconds": 1.04,
+      "sha256": "73cc9d05f3c34c43dfa64eac4a71d642e5b7106049165c54fadddd8f9475fb1a",
+      "bytes": 18588,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/escorregar-curto.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/apito-escorregador.mp3",
+      "duration_seconds": 1.44,
+      "sha256": "88dc681c47bc1687505c066d048125a258f200a69b5be8ff99ab0632546516fb",
+      "bytes": 13587,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/apito-escorregador.mp3"
     }
   ],
   "license_notice": "Music CC BY 4.0: give credit and indicate edits. Original synthesized SFX have no required attribution."

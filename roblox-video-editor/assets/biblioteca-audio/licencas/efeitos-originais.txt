@@ -1,3 +1,5 @@
-Os seis efeitos em efeitos/originais-livres foram sintetizados matematicamente neste projeto, sem amostras de terceiros.
+Os dez efeitos em efeitos/originais-livres foram sintetizados matematicamente neste projeto, sem amostras de terceiros:
+ding, sucesso, erro, whoosh, impacto, boing e escorregar-rapido, escorregar-trava, escorregar-curto,
+apito-escorregador (estes quatro gerados por scripts/criar_sfx_escorregador.py).
 O usuario pode usar e modificar esses arquivos em videos comerciais, sem credito obrigatorio.
 Isso nao se aplica a efeitos/fornecidos nem a efeitos/capcut-convertidos, cujas licencas nao foram comprovadas.

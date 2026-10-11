@@ -26,10 +26,13 @@ Os tempos de impacto vêm de quadros a 4 fps ou mais; o som precisa bater no qua
 - **Susto / surpresa / vilão aparece**: `zoom` segurando 1 s no ponto + sticker `interrogacao` + som de `vinheta` curta, `campainha` ou `grunhido` + legenda `grito` "?!" ou "O QUE É ISSO?!".
 - **Falha / erro bobo**: `erro` + sticker `erro` ou `oops` + legenda `grito` vermelha "QUASE!"/"OPS!" + `reverse` de 1 s (rebobina) e repete a cena.
 - **Vitória / recompensa / dinheiro**: `sucesso`, `ding` ou `aplausos` + `confete` ou `check` + legenda `grito` verde.
+- **Escorregador / deslizar**: som de atrito no plástico durante toda a descida, não whoosh. `efeitos/originais-livres/escorregar-trava.mp3` desce 2,0 s e para com um rangido de borracha exatamente aos 2,0 s (coloque em `instante_da_parada - 2.0`); `escorregar-rapido.mp3` acelera por 2,2 s e solta uma lufada de ar no lançamento (coloque no início da descida de 2,2 s); `escorregar-curto.mp3` para escorregões de 1 s; `apito-escorregador.mp3` (apito de desenho descendo, 1,4 s) termina no impacto de uma queda. Atrito em `gain_db` −10/−11: fica 4–6 LU abaixo da voz (medido no piloto); mais alto que isso vira chiado.
 - **Correndo / voando rápido**: `speed` 1.5–2 + `shake` leve contínuo + `zoom` + `whoosh`. Não use o sticker `linhas-velocidade` (reprovado pelo usuário: fica artificial).
 - **Constrangimento / tensão**: sticker `suor` + `clique` ou `pop` + `zoom` lento.
 - **Troca de cena / capítulo**: `whoosh` + `flash` branco 0.1 s + legenda `titulo` ("JOGO 2") com `ding` ou `pop`.
 - **Toda legenda `grito`** ganha um `pop` ou `clique` na entrada (campo `sfx` da própria legenda).
+
+**Nenhum efeito por cima da fala.** Whoosh de corte, rufar de tímpano e buzzer terminam antes de a palavra começar (use `duration`) ou entram na pausa entre duas palavras. No piloto, o buzzer longo em cima de "Ué..." fez a fala sumir na transcrição.
 
 Varie: nunca use o mesmo arquivo de efeito duas vezes seguidas e use `scripts/selecionar_sfx.py --timeline` para escolher os menos usados. Sons de `vinheta` são jingles de 2–6 s: use como "trilha de piada" pontual, abaixando a música (`gain_db` da música −22 a −24) enquanto tocam.
 
@@ -58,5 +61,7 @@ Stickers entram ao lado do personagem, nunca em cima dele, e somem em 0.5–1.2 
 Sem voz, conte a história com acontecimentos visuais e legendas de reação. Evite palavrões, duplo sentido, humilhação de jogadores, sustos sonoros agressivos, pedidos de dados pessoais e alegações de Robux grátis. Corte ou silencie palavrões do original. Exagero é de comédia (som, zoom, sticker), não de volume: nenhum efeito deve estourar acima do resto da mixagem.
 
 ## Revisão
+
+Rode `python scripts/revisar_legendas.py timeline.json` antes de renderizar a versão final e corrija até `[legenda] total 0 problema(s)`: ele aponta legendas sobrepostas (duas ao mesmo tempo), destaque que pisca (< 0,12 s), legenda quebrando em duas linhas, texto cortado na borda e legenda junto com sticker/selo na mesma faixa. Depois confira quadros nas trocas de palavra.
 
 Assista a cada exportação ou inspecione quadros a cada 0,5–1 s se houver limite de ferramentas, conferindo se cada impacto tem som, zoom/tremida e sticker no quadro certo. Ouça fala/música/SFX juntos. Confira as metas de densidade no `relatorio-render.json`. Se não conseguir revisar, registre a revisão como pendente.
