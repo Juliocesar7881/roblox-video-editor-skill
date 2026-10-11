@@ -17,10 +17,11 @@ Regras do sistema do amigo do usuário, adaptadas a esta skill. Valem para todo 
 - Planos sem o protagonista (mostrar as opções) são insertos curtos, marcados com `K.inserto(true)`.
 - `K.auditarCamera` precisa terminar com zero problemas, junto com `K.auditar` (colisões).
 
-## Rosto (feedback do cliente: "as expressões faciais têm que ser as mesmas da skill")
-- O rosto é o da skill eibrunoruan/roblox-shorts-generator, portado sem mudanças (`studio/src/Expressions.lua` + `SpeechMouth.lua`): use os nomes dela (`curious`, `panic`, `angry`, `eat`, `hurt`, `relief`, `greedy`, `disgust`, `neutral`). Não redesenhar olhos, bocas nem cores.
-- Suor é a gota da própria careta (`panic`/`disgust`), escorrendo pelo rosto. Nada de sticker de gotas solto na tela.
-- Noob com as proporções e cores do noob da skill de referência (cabeça padrão; cabeça maior deixa as pernas minúsculas).
+## Rosto (cliente: "quero idêntico a este aqui, todas as expressões faciais dele")
+- Referência oficial do rosto: o Short "O CHÃO VIROU LAVA NO ROBLOX!" (BRUNOBLOX). Olhos ovais altos (~1,85× a largura) quase encostando (vão pequeno), contorno preto grosso, branco creme, pupila preta estreita com brilho, sobrancelhas grossas inclinadas logo acima dos olhos, bochechas rosadas, gota de suor ciano com contorno preto ao lado do olho.
+- Bocas: oval preta ALTA com língua rosa ao falar e gritar, boca pequena com língua no medo, traço branco contornado no neutro, boca aberta com a fileira de dentes em cima na alegria, olhos X no nocaute.
+- Careta certa por momento: tensão/contagem = `medo`, susto/queda = `grito`, alívio/vitória = `feliz`, pergunta = `surpreso`, tombo = `nocaute`.
+- Nada de sticker de gotas solto na tela; noob em proporção padrão (cabeça 1,0).
 
 ## Transições (feedback: "as transições ficaram meio cagadas, parece bug")
 - Corte seco, sem flash branco nem efeito no corte. Na troca de lugar, o primeiro quadro do plano novo já tem a pose certa (`K.cortarPara`).
@@ -41,7 +42,7 @@ Regras do sistema do amigo do usuário, adaptadas a esta skill. Valem para todo 
 - Medir as falas primeiro, depois ajustar o tempo da ação.
 
 ## Legendas
-- A legenda nunca anuncia o que ainda não apareceu: o corte para uma opção entra no começo da frase dela ("ou o amarelo" → no "ou"), e nenhum grupo de legenda atravessa um corte (`legendas_karaoke(..., cortes=)`; `revisar_legendas.py` acusa com `"cortes"` na saída).
+- A legenda nunca anuncia o que ainda não apareceu: o corte para a opção fica na palavra dela ("amarelo") e a frase que começa antes ("ou o amarelo gigante?") só aparece NO corte; até lá a tela fica sem legenda (`legendas_karaoke(..., cortes=)`; `revisar_legendas.py` acusa legenda atravessando corte com `"cortes"` na saída).
 - Uma ideia por vez ("O VERMELHO," some → "O AZUL..." some → "OU O AMARELO GIGANTE?"), na pausa a tela fica limpa.
 - Lilita One branca, contorno `#10283E`, sombra deslocada para baixo, palavra falada em `#FFE54F`, números em ciano; entrada elástica de cada grupo; área segura inferior, sem cobrir o rosto.
 

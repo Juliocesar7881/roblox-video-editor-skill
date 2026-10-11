@@ -11,7 +11,7 @@ Checks
   * texto encostando na borda (cortado)
   * legenda ao mesmo tempo que um sticker/selo na faixa da legenda
   * legenda atravessando um corte de camera ("cortes" na saida): ela anunciaria o que ainda nao
-    apareceu na tela ou ficaria do plano anterior
+    apareceu na tela (o certo e a tela ficar sem legenda ate o corte)
 Exit code 1 when anything is found, so it can gate a render.
 """
 import argparse, json, subprocess, sys, tempfile

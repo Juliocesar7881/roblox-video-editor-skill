@@ -70,7 +70,7 @@ def main():
     ini = T['falas']
     fim = T['fim']
 
-    # Nenhuma legenda atravessa os cortes para as opcoes: ela entra junto com o escorregador.
+    # A legenda da opcao so entra no corte para ela (sem texto ate o escorregador aparecer).
     captions = legendas_karaoke(falas, ini, cortes=T['cortes_opcoes'])
     # Nada de legenda junto com os selos da contagem (mesma faixa da tela): corta o que invadir.
     c0, c1 = T['contagem'], T['contagem'] + 5

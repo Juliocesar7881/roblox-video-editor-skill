@@ -35,7 +35,7 @@ Peça uma ideia ("faz um de qual escorregador é o mais rápido") e o Claude ent
 
 - roteiro original, com as falas do noob na voz **Roger do ElevenLabs** (pela chave de API do usuário ou pelo site, com o usuário logado);
 - cena montada e animada no **Roblox Studio pela linha de comando oficial** (`-task RunScript`): sem MCP e sem cliques, numa janela própria do Studio que fecha sozinha;
-- noob R15 com a skin das referências (cabeça clássica grande, as caretas da skill eibrunoruan/roblox-shorts-generator — 9 expressões com piscada, sobrancelhas, gota de suor escorrendo e boca que mexe com a voz), animado com os pacotes oficiais do Roblox (Cartoony, Levitation, emotes) e pisando sempre no chão certo;
+- noob R15 com a skin das referências (cabeça clássica grande, rosto idêntico ao do Short de referência do cliente — olhos ovais juntos, 13 expressões, piscada, sobrancelhas, suor e boca que mexe com a voz), animado com os pacotes oficiais do Roblox (Cartoony, Levitation, emotes) e pisando sempre no chão certo;
 - auditorias automáticas de colisão e de câmera (rosto sempre visível, nunca atrás da legenda) e regras de produção incorporadas de [eibrunoruan/roblox-shorts-generator](https://github.com/eibrunoruan/roblox-shorts-generator);
 - gravação **somente da janela do Studio** (Windows Graphics Capture), em 1080×1920 a 60 fps;
 - edição exagerada com a skill de edição: legendas palavra a palavra revisadas automaticamente (`revisar_legendas.py`), contagem, efeitos sonoros (incluindo sons originais de escorregador), stickers e música.

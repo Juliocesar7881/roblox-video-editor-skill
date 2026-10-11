@@ -14,7 +14,7 @@ K.anim(noob, "idle", {fade = 0})
 local ev = {
 	{t = 0, f = function()
 		raiz.CFrame = inicio
-		K.rosto(noob, "neutral")
+		K.rosto(noob, "normal")
 		cam.rosto(noob, 4.2, 36, {altura = -0.4, queixo = 0.1})
 	end},
 	{t = 0.3, f = function()
@@ -24,7 +24,7 @@ local ev = {
 		cam.rosto(noob, 4.6, 38, {lado = 1.6, altura = -0.2, queixo = 0.1})
 	end},
 }
-local lista = { "curious", "panic", "angry", "eat", "hurt", "relief", "greedy", "disgust", "neutral" }
+local lista = { "surpreso", "medo", "grito", "nervoso", "feliz", "sorrindo", "confiante", "bravo", "duvida", "tonto", "apertado", "nocaute", "normal" }
 for i, nome in ipairs(lista) do
 	ev[#ev + 1] = {t = 2.2 + (i - 1) * 0.8, f = function() K.rosto(noob, nome) end}
 end

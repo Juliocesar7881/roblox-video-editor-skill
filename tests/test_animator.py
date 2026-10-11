@@ -274,27 +274,31 @@ class Animator(unittest.TestCase):
             self.assertIsNotNone(lat)
             self.assertAlmostEqual(lat, 0.05, delta=0.02)
 
-    def test_face_is_the_reference_skill_port(self):
-        # Pedido do cliente: as mesmas caretas da skill eibrunoruan/roblox-shorts-generator.
+    def test_face_matches_reference_video(self):
+        # Video de referencia do cliente (O CHAO VIROU LAVA, BRUNOBLOX): olhos ovais altos quase
+        # encostando (vao pequeno), pupila estreita, suor ciano, boca oval escura alta ao falar.
+        import re
         kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
-        for trecho in ('gui.CanvasSize = Vector2.new(600, 300)', 'for index, x in ipairs({ 103, 197 }) do',
-                       'local size = name == "panic" and Vector2.new(74, 68) or Vector2.new(62, 54)',
-                       'e.sweat.Position = UDim2.fromOffset(252, 27 + slide * 42)',
-                       'local blink = blinkPhase > 3.48 and blinkPhase < 3.7',
-                       'local resting = name == "panic" and 20 or name == "greedy" and 34 or 7',
-                       'AnimKit.CABECA = 1.0'):
+        m = re.search(r'local OLHO = \{ x = \{ E = ([\d.]+), D = ([\d.]+) \}, y = [\d.]+, w = ([\d.]+), h = ([\d.]+), borda = ([\d.]+) \}', kit)
+        e, d, w, h, borda = map(float, m.groups())
+        self.assertTrue(0.02 <= (d - e) - w <= 0.07)
+        self.assertTrue(1.6 <= h / w <= 2.1)
+        for trecho in ('rbxasset://textures/whiteCircle.png', 'oval("grito"', 'local FALA = { { 0.1, 0.08 }',
+                       'Color3.fromRGB(64, 206, 230)', 'AnimKit.CABECA = 1.0', 'panic = "grito"'):
             self.assertIn(trecho, kit)
-        for nome in ('curious', 'panic', 'angry', 'eat', 'hurt', 'relief', 'greedy', 'disgust', 'neutral'):
-            self.assertIn(f'{nome} = true', kit)
-        self.assertIn('medo = "panic"', kit)  # nomes antigos continuam funcionando
 
-    def test_captions_never_cross_a_cut(self):
+    def test_caption_waits_for_the_cut(self):
+        # "ou o amarelo gigante?" com o corte no "amarelo": sem legenda ate o corte, a frase entra nele.
         ws = 'O vermelho, o azul... ou o amarelo gigante?'.split()
         tempos = [(0, .22), (.22, 1.18), (1.46, 1.52), (1.52, 1.98), (1.98, 2.9), (2.9, 3.1), (3.1, 3.48), (3.48, 3.98)]
         f = [{'id': '1', 'palavras': [{'w': w, 'start': a, 'end': b} for w, (a, b) in zip(ws, tempos)]}]
-        corte = 10 + 3.1 - 0.05  # corte no meio da frase: "ou o" | "amarelo gigante?"
+        corte = 10 + 3.1 - 0.05
         caps = legendas_karaoke(f, {'1': 10}, cortes=[corte])
+        amarelo = [c for c in caps if 'AMARELO' in c['text']]
+        self.assertAlmostEqual(amarelo[0]['start'], corte, places=2)
+        self.assertTrue(amarelo[0].get('entrada'))
         self.assertFalse([c for c in caps if c['start'] < corte - 0.2 and c['end'] > corte + 0.2])
+        self.assertTrue(all(c['end'] - c['start'] >= .16 for c in caps if '*' in c['text']))
 
     def test_animkit_clean_cuts_and_focus(self):
         kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')

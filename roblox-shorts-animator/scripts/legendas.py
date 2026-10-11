@@ -61,8 +61,9 @@ def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, 
     nas pausas da fala, a tela fica sem legenda. Dentro do grupo a palavra falada fica amarela
     (numeros em ciano, NAO em coral). Os eventos de um grupo nunca se sobrepoem; o primeiro tem
     'entrada' (entrada elastica) e o ultimo 'saida' (fade curto).
-    cortes: tempos (no video final) dos cortes de camera; nenhum grupo atravessa um corte, para a
-    legenda nunca anunciar o que ainda nao apareceu (ex.: "OU O AMARELO" ainda no plano do azul)."""
+    cortes: tempos (no video final) dos cortes de camera. Um grupo que comecaria antes de um corte e
+    terminaria depois dele so aparece NO corte (a tela fica sem legenda ate la): a legenda nunca
+    anuncia o que ainda nao apareceu (ex.: "OU O AMARELO GIGANTE?" so quando o amarelo aparece)."""
     def custo(pedaco):
         letras = sum(len(x['w']) for x in pedaco) + len(pedaco) - 1
         if len(pedaco) > max_palavras or (letras > max_letras and len(pedaco) > 1):
@@ -101,8 +102,7 @@ def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, 
             prox = ws[i + 1] if i + 1 < len(ws) else None
             pontuado = re.search(r'[,.!?…]$', w['w'])
             pausou = prox is not None and prox['start'] - w['end'] > pausa
-            cortou = prox is not None and any(base + w['start'] < c <= base + prox['start'] + 0.12 for c in cortes)
-            if prox is not None and (pontuado or pausou or cortou):
+            if prox is not None and (pontuado or pausou):
                 frases.append(g); g = []
         if g:
             frases.append(g)
@@ -111,11 +111,21 @@ def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, 
             fim_grupo = g[-1]['end'] + folga
             if gi + 1 < len(grupos):
                 fim_grupo = min(fim_grupo, grupos[gi + 1][0]['start'])
-            # A legenda some no corte seguinte (nao invade o plano novo).
-            proximos = [c - base for c in cortes if base + g[0]['start'] + 0.12 < c < base + fim_grupo]
-            if proximos:
-                fim_grupo = min(fim_grupo, max(g[-1]['end'] - 0.0, min(proximos)))
-            for ev in _eventos_do_grupo(g, fim_grupo, minimo, pausa_destaque):
+            eventos = _eventos_do_grupo(g, fim_grupo, minimo, pausa_destaque)
+            # Corte no meio do grupo: o grupo so entra no corte (sem legenda antes dele).
+            dentro = [c - base for c in cortes if base + g[0]['start'] + 0.05 < c < base + g[-1]['end']]
+            if dentro:
+                c = max(dentro)
+                eventos = [ev for ev in eventos if ev['fim'] > c + 0.02]
+                if eventos:
+                    eventos[0]['ini'] = max(eventos[0]['ini'], c)
+                    # Sobra curta de um destaque anterior ao corte nao pisca: junta com o seguinte.
+                    while len(eventos) > 1 and eventos[0]['fim'] - eventos[0]['ini'] < minimo:
+                        eventos[1]['ini'] = eventos[0]['ini']
+                        del eventos[0]
+                    for i, ev in enumerate(eventos):
+                        ev['entrada'] = i == 0
+            for ev in eventos:
                 caps.append({'start': round(base + ev['ini'], 3), 'end': round(base + ev['fim'], 3),
                              'text': ev['texto'], 'style': 'karaoke', 'highlight': ev['cor'],
                              **({'entrada': True} if ev['entrada'] else {}),

@@ -1,5 +1,10 @@
 # Validação antes da publicação
 
+## v1.9.0 (11 de outubro de 2026)
+
+- 32 testes passaram, incluindo a geometria do rosto do vídeo de referência e a legenda que só entra no corte ("OU O AMARELO GIGANTE?" em 5,74 s, sem destaque piscando).
+- Piloto regravado (~64 quadros/s de captura): `[auditoria] total 0`, `[camera] total 0`, `[legenda] total 0`; cortes a ±2 quadros; rostos comparados lado a lado com o vídeo de referência.
+
 ## v1.8.0 (11 de outubro de 2026)
 
 - 32 testes passaram, incluindo o porte fiel das caretas (tela 600×300, olhos em x 103/197, as 9 caretas e os apelidos), legenda que quebra no corte e o `revisar_legendas.py` acusando legenda atravessando corte.

@@ -1,5 +1,10 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.9.0 — rosto idêntico ao Short de referência e legenda esperando o corte
+- Rosto refeito a partir do Short de referência do cliente ("O CHÃO VIROU LAVA NO ROBLOX", BRUNOBLOX): olhos ovais altos quase encostando, branco creme, pupila estreita com brilho, sobrancelhas grossas inclinadas, suor ciano ao lado do olho; bocas como no vídeo (oval preta alta com língua ao falar/gritar, traço branco no neutro, boca aberta com dentes na alegria, olhos X no nocaute). As caretas da v1.8 saíram; os nomes delas viraram apelidos.
+- Legenda: o corte para a opção volta para a palavra ("amarelo") e a frase que começa antes ("ou o amarelo gigante?") só aparece no corte, com a tela sem legenda até o escorregador aparecer.
+- Mantidos da v1.8: noob em proporção padrão, sem sticker de gotas.
+
 ## v1.8.0 — caretas da skill de referência, noob em proporção certa e legenda junto do corte
 - Rosto trocado pelas caretas da skill eibrunoruan/roblox-shorts-generator (Expressions.lua + SpeechMouth.lua portados sem mudanças): `curious`, `panic`, `angry`, `eat`, `hurt`, `relief`, `greedy`, `disgust`, `neutral`, com estouro na troca, piscada, sobrancelhas balançando e boca de fala; os nomes antigos viraram apelidos.
 - Gota de suor escorrendo do rosto (careta `panic`) no lugar do sticker de gotas solto na tela.
