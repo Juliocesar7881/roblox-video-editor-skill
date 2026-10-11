@@ -226,6 +226,70 @@ class Animator(unittest.TestCase):
             self.assertAlmostEqual(xs.mean() / 1080, fx, delta=.01)
             self.assertAlmostEqual(ys.mean() / 1920, fy, delta=.01)
 
+    def test_recorder_timestamps_frames_at_capture(self):
+        # O escritor reamostra pelo tempo de CAPTURA: quadros que faltam viram repeticao e a saida tem
+        # um quadro por 1/fps desde o flash (antes o FFmpeg carimbava na leitura e o video adiantava).
+        import queue, threading
+        from captura_janela import Gravador
+
+        class Pipe:
+            def __init__(self):
+                self.escritos = []
+
+            def write(self, dados):
+                self.escritos.append(bytes(dados)[0])
+
+        g = Gravador.__new__(Gravador)
+        g.fps, g.escritos, g.q = 10, 0, queue.Queue()
+        g.ff = type('F', (), {'stdin': Pipe()})()
+        # Quadros A (t=0), B (t=0,25), C (t=0,32), D (t=0,61). Saida a 10 fps: cada quadro t = k/10 mostra
+        # o ultimo capturado ate ali (0-0,2 A; 0,3 B; 0,4-0,6 C) e o ultimo fecha o arquivo (D).
+        for item in [(0.0, b'A'), (0.25, b'B'), (0.32, b'C'), (0.61, b'D'), None]:
+            g.q.put(item)
+        th = threading.Thread(target=g._escritor)
+        th.start()
+        th.join(5)
+        self.assertEqual(bytes(g.ff.stdin.escritos), b'AAABCCCD')
+
+    @unittest.skipIf(ffmpeg_or_none() is None, 'FFmpeg indisponivel')
+    def test_sync_marks_measure_render_latency(self):
+        # Marcas magenta no alto do viewport em t = 0,5 / 5,5 da timeline, aparecendo 0,05 s atrasadas.
+        from captura_janela import medir_sincronia
+        ff = ffmpeg_or_none()
+        with tempfile.TemporaryDirectory() as td:
+            v = Path(td) / 'viewport.mp4'
+            caixa = "drawbox=x=(iw-160)/2:y=2:w=160:h=14:color=0xFF00FF:t=fill:enable='between(t,{a},{b})'"
+            marcas = ','.join(caixa.format(a=0.8 + t + 0.05, b=0.8 + t + 0.17) for t in (0.5, 5.5))
+            subprocess.run([ff, '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=gray:s=640x360:r=60:d=7.5',
+                            '-vf', marcas, '-pix_fmt', 'yuv420p', str(v)], check=True)
+            lat = medir_sincronia(v, 0.8, 6.5)
+            self.assertIsNotNone(lat)
+            self.assertAlmostEqual(lat, 0.05, delta=0.02)
+
+    def test_face_matches_client_references(self):
+        # Medidas das referencias do cliente: olhos ovais altos (altura ~1,85x a largura) com um vao
+        # entre eles (antes encostavam: "o olho ta muito colado"), elipses de verdade e luz da cena.
+        import re
+        kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
+        m = re.search(r'local OLHO = \{ x = \{ E = ([\d.]+), D = ([\d.]+) \}, y = [\d.]+, w = ([\d.]+), h = ([\d.]+), borda = ([\d.]+) \}', kit)
+        e, d, w, h, borda = map(float, m.groups())
+        self.assertGreaterEqual((d - e) - w, 0.06)
+        self.assertTrue(1.6 <= h / w <= 2.1)
+        for trecho in ('rbxasset://textures/whiteCircle.png', 'nocaute = {', 'gui.LightInfluence = AnimKit.ROSTO_LUZ',
+                       'BindToRenderStep("AnimKitRosto"', 'SOBRANCELHA.minimo'):
+            self.assertIn(trecho, kit)
+        self.assertNotIn('Palpebra', kit)  # a palpebra sem luz aparecia como uma faixa amarela sobre os olhos
+
+    def test_animkit_clean_cuts_and_focus(self):
+        kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
+        for trecho in ('function AnimKit.cortarPara', 'RunService.Heartbeat:Wait()', 'r.CFrame = cfs[1]',
+                       'AnimKitMarca', 'AnimKit.MARCAS', 'DepthOfFieldEffect', 'function AnimKit.foco'):
+            self.assertIn(trecho, kit)
+        modelo = (ANIM / 'modelos' / 'escorregador' / 'gerar_cena.py').read_text(encoding='utf-8')
+        self.assertIn('K.cortarPara', modelo)
+        self.assertIn('- K.tempo()', modelo)  # descida e voo terminam no tempo da timeline
+        self.assertNotIn('tr:Stop(0) end', modelo)  # parar tudo deixava o noob deitado em pose T
+
     def test_animkit_r15_pack_and_lipsync(self):
         kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
         for trecho in ('HumanoidRigType.R15', 'idle = 742637544', 'correr = 742638842', 'function AnimKit.falar',

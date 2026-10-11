@@ -95,47 +95,54 @@ def main():
     E(corrida, '''		K.mover(noob, V(-18.5, 0, -9.5), 1.1, "correr")
 		cam.seguir(raiz, V(-7, 2.2, -5.5), 1.3)''')
     # No topo do vermelho: desce devagar ate travar.
-    E(topo_vermelho, '''		K.sentarEm(noob, e1[1], V(0, 0, -1))
+    E(topo_vermelho, f'''		K.sentarEm(noob, e1[1], V(0, 0, -1))
 		K.rosto(noob, "feliz")
-		K.deslizar(noob, meio1, 2.0)
+		K.deslizar(noob, meio1, {trava:.3f} - K.tempo())
 		cam.seguir(noob.Head, V(4, 0.6, -7.5), 2.3, V(0, -1.0, 0))''')
     E(trava, '''		K.anim(noob, "sentar")
 		K.rosto(noob, "duvida")
 		cam.rosto(noob, 5.4, 38, {lado = 0.9, altura = 0.15, queixo = 0.05})''')
     E(ini['05'] + 0.1, '		K.olhar(noob, 0.2, 0.9)')
     # Fala 06: o amarelo gigante.
-    E(ini['06'] - 0.05, '''		raiz.CFrame = K.emPe(V(22.5, 0, -18), V(24.5, 0, -26))
-		K.anim(noob, "idle")
+    # Corte com teletransporte: K.cortarPara troca a animacao um quadro antes (sem o quadro do noob
+    # ainda sentado no lugar novo).
+    E(ini['06'] - 0.07, '''		K.cortarPara(noob, K.emPe(V(22.5, 0, -18), V(24.5, 0, -26)), "idle", function()
+			cam.corte(V(21, 2.4, -25), V(24.5, 9, 6), 60)
+			cam.mover(V(21.2, 2.2, -24.2), V(24.5, 12, 6), 1.6, 58)
+		end)
 		K.rosto(noob, "medo")
-		K.olhar(noob, 0.3, -1)
-		cam.corte(V(21, 2.4, -25), V(24.5, 9, 6), 60)
-		cam.mover(V(21.2, 2.2, -24.2), V(24.5, 12, 6), 1.6, 58)''')
+		K.olhar(noob, 0.3, -1)''')
     E(topo_amarelo, '''		K.sentarEm(noob, e3[1], V(0, 0, -1))
 		K.rosto(noob, "medo")
 		K.olhar(noob, 0, 1)
 		K.inserto(true)
-		cam.corte(e3[1] + V(2.5, 5.5, 7), e3[1] + V(0, -26, -42), 62)''')
+		-- Camera baixa no pe do escorregador olhando para o noob la no topo: mostra o tamanho.
+		cam.corte(V(31, 2.2, -17), e3[1] + V(0, 2, 0), 52)
+		cam.mover(V(30, 2.8, -13.5), e3[1] + V(0, 2, 0), 0.85, 46)''')
     E(ini['07'] - 0.15, '''		K.inserto(false)
 		K.rosto(noob, "confiante")
 		K.olhar(noob, 0, 0)
 		cam.rosto(noob, 4.6, 40, {lado = 1.3, altura = 0.1, queixo = 0.1})''')
     # Descida rapida, grito e voo com cambalhotas.
     # O voo comeca exatamente quando a descida termina (callback), sem duas animacoes brigando.
-    E(descida, '''		local pouso = K.deitado(V(24, 0, -60), V(0, 0, 1))
-		K.deslizar(noob, e3, 2.2, nil, function()
-			K.voar(noob, pouso, 11, 1.6, 1, "cair", function()
-				for _, tr in ipairs(noob.Humanoid.Animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
-				raiz.CFrame = pouso
+    E(descida, f'''		local pouso = K.deitado(V(24, 0, -60), V(0, 0, 1))
+		K.deslizar(noob, e3, {voo:.3f} - K.tempo(), nil, function()
+			K.voar(noob, pouso, 11, {pouso:.3f} - K.tempo(), 1, "cair", function()
+				-- Sem animacao o R15 deitado abre os bracos em T (cara de bug); idle sem transicao deixa
+				-- o corpo esticado com os bracos ao lado. O corte para a vista de cima espera a pose
+				-- entrar (K.cortarPara). Olhos de nocaute (X) como na referencia.
+				K.rosto(noob, "nocaute", 0.05)
+				K.cortarPara(noob, pouso, "idle", function()
+					local c = noob.Head.Position
+					cam.corte(c + V(0, 9.5, -2.2), c + V(0, 0, -2.0), 52, V(0, 0, 1))
+				end)
 				K.poeira(V(24, K.chao(V(24, 0, -60)) + 0.3, -60), 30)
-				K.rosto(noob, "apertado", 0.05)
 				cam.tremor(0.8, 0.5)
 			end)
 			cam.seguir(noob.Head, V(6, 1.2, -8), 1.6, V(0, -1.4, 0))
 		end)
 		cam.seguir(noob.Head, V(3.2, 1.2, -9), 2.6, V(0, -1.7, 0))''')
     E(ini['08'] - 0.1, '		K.rosto(noob, "grito")\n		K.olhar(noob, 0, 0)')
-    E(pouso + 0.05, '''		local c = noob.Head.Position
-		cam.corte(c + V(0, 9.5, -2.2), c + V(0, 0, -2.0), 52, V(0, 0, 1))''')
     E(pouso + 0.6, '''		K.rosto(noob, "tonto")
 		local c = noob.Head.Position
 		cam.corte(c + V(0, 5.2, -0.2), c, 40, V(0, 0, 1))
@@ -164,6 +171,7 @@ local meio1 = {{}}
 for i = 1, 5 do meio1[i] = e1[i] end
 K.piscar(noob)
 K.preCarregar(noob)
+K.foco(noob.Head)
 K.anim(noob, "idle", {{fade = 0}})
 ''' + ('' if a.sem_auditoria else 'K.AUDITORIA_DETALHE = true\nK.auditar(noob)\nK.auditarCamera(noob)\n') + '''
 K.rodar({''' + '''

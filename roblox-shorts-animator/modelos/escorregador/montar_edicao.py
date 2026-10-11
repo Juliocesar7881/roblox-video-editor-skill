@@ -89,10 +89,9 @@ def main():
         S.append(sfx('ding', rap))
     except StopIteration:
         pass
-    # Um corte por opcao: whoosh + flash leve.
+    # Um corte seco por opcao, com whoosh (sem flash: piscada branca no corte parecia bug).
     for k, c in enumerate(T['cortes_opcoes']):
         S.append(sfx('whoosh', c, pitch=[1.0, 1.1, 0.9][k]))
-        E.append({'type': 'flash', 'at': round(c, 3), 'color': 'branco', 'intensity': 0.35, 'duration': 0.08})
     # Rufar curto: termina antes de "Escolhe rapido!" (nenhum efeito por cima da fala).
     t_tim = T['cortes_opcoes'][2] + 0.25
     S.append(sfx('timpano', t_tim, dur=round(min(1.88, ini['03'] - t_tim), 3)))
@@ -139,7 +138,7 @@ def main():
     S.append(sfx('boing', p + 0.35))
     E += [{'type': 'punch', 'at': round(p, 3), 'intensity': 0.3, 'duration': 0.4},
           {'type': 'shake', 'at': round(p, 3), 'duration': 0.6, 'intensity': 1.6},
-          {'type': 'flash', 'at': round(p, 3), 'color': 'branco', 'intensity': 0.7, 'duration': 0.12}]
+          {'type': 'flash', 'at': round(p, 3), 'color': 'branco', 'intensity': 0.5, 'duration': 0.1}]
     O.append({'file': OV + 'boom.png', 'at': round(p, 3), 'duration': 0.8, 'x': 0.08, 'y': 0.12, 'width': 0.42})
     O.append({'file': OV + 'estrelas-tontas.png', 'at': round(p + 0.65, 3), 'duration': fim - p - 0.7, 'x': 0.22, 'y': 0.1, 'width': 0.56})
     # Final: "pelo menos foi rapido..." + trombone triste.

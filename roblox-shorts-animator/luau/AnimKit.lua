@@ -65,19 +65,36 @@ function AnimKit.bloco(props)
 	return p
 end
 
--- Rosto de desenho no estilo das referencias: olhos ovais grandes com contorno grosso, pupilas
--- pretas sem brilho, sobrancelhas grossas, bochechas, gota de suor, olhos apertados (>_<) e bocas.
--- Fica numa placa transparente soldada na frente da cabeca classica: uma SurfaceGui na propria
--- cabeca ficaria escondida dentro da malha arredondada.
+-- Rosto de desenho no estilo das referencias do cliente (medido quadro a quadro nelas): olhos
+-- ovais altos (altura ~1,85x a largura) com contorno grosso e um vao entre eles, pupilas pretas
+-- estreitas com brilho, sobrancelhas grossas que mexem com a fala, bochechas, gota de suor e boca
+-- escura com lingua. Elipses de verdade (textura de circulo que vem com o Studio) numa placa
+-- soldada na frente da cabeca (uma SurfaceGui na propria cabeca ficaria dentro da malha
+-- arredondada), com a luz da cena: o branco do olho escurece na sombra junto com a cabeca, como
+-- um rosto desenhado na propria cabeca.
 AnimKit.CABECA = 1.3 -- fator sobre a cabeca classica R15 (as referencias usam cabeca maior)
-AnimKit.ROSTO_TAM = 0.84 -- placa do rosto, em fracao da largura da cabeca
-AnimKit.ROSTO_Y = 0.01 -- deslocamento vertical da placa, em fracao da altura da cabeca
+AnimKit.ROSTO_TAM = 1.0 -- placa do rosto, em fracao da largura/altura da cabeca (frente inteira)
+AnimKit.ROSTO_Y = 0.0 -- deslocamento vertical da placa, em fracao da altura da cabeca
 AnimKit.ROSTO_Z = 0.5 -- distancia da placa ao centro, em fracao da profundidade da cabeca
+AnimKit.ROSTO_LUZ = 0.8 -- LightInfluence do desenho (0 = chapado e brilhante, 1 = luz da cena)
+-- Faixa vertical do desenho na placa (de cima): topo das sobrancelhas ate o fim da boca de grito.
+AnimKit.ROSTO_FAIXA = { 0.08, 0.9 }
 
+local CIRCULO = "rbxasset://textures/whiteCircle.png" -- circulo branco de 512 px que vem com o Studio
 local PRETO, BRANCO = Color3.new(0, 0, 0), Color3.new(1, 1, 1)
-local ROSA = Color3.fromRGB(255, 120, 140)
-local OLHO = { x = { E = 0.365, D = 0.635 }, y = 0.46, w = 0.25, h = 0.38 }
-local BOCA_Y = 0.8
+local ESCURO = Color3.fromRGB(22, 10, 12) -- dentro da boca
+local LINGUA = Color3.fromRGB(222, 92, 150)
+-- Branco quente: com a luz azulada do ceu e a saturacao da cena, um branco puro ficava ciano.
+local BRANCO_OLHO = Color3.fromRGB(255, 246, 228)
+-- Geometria em fracao da placa, medida nas referencias: olho 0,25 x 0,46 da cabeca, centros a 0,33
+-- um do outro (vao de 0,08), contorno de ~0,024; pupila ~30% x 34% do olho.
+local OLHO = { x = { E = 0.335, D = 0.665 }, y = 0.42, w = 0.25, h = 0.46, borda = 0.024 }
+local PUPILA = { w = 0.3, h = 0.34, y = 0.53 } -- fracao do branco do olho
+local SOBRANCELHA = { w = 0.2, h = 0.05, acima = 0.03, minimo = 0.105 } -- acima: distancia acima do topo do olho;
+-- minimo: a sobrancelha nunca sobe alem disso (a borda de cima da cabeca e arredondada e ela ficaria no ar)
+local BOCA_Y = 0.79
+-- Bocas de fala (largura, altura) por nivel de abertura; o nivel 0 e a boca fechada ("reta").
+local FALA = { { 0.1, 0.055 }, { 0.14, 0.1 }, { 0.19, 0.15 } }
 
 local function frame(nome, pai, cor, pos, tam, z, raio)
 	local f = Instance.new("Frame")
@@ -95,6 +112,21 @@ local function frame(nome, pai, cor, pos, tam, z, raio)
 	end
 	f.Parent = pai
 	return f
+end
+
+local function elipse(nome, pai, cor, pos, tam, z)
+	local e = Instance.new("ImageLabel")
+	e.Name = nome
+	e.BackgroundTransparency = 1
+	e.Image = CIRCULO
+	e.ImageColor3 = cor
+	e.ScaleType = Enum.ScaleType.Stretch
+	e.AnchorPoint = Vector2.new(0.5, 0.5)
+	e.Position = pos
+	e.Size = tam
+	e.ZIndex = z or 1
+	e.Parent = pai
+	return e
 end
 
 local function contorno(f, esp, cor)
@@ -126,8 +158,7 @@ local function rostoGui(noob)
 	if velha then velha:Destroy() end
 	local placa = Instance.new("Part")
 	placa.Name = "RostoPlaca"
-	local tam = head.Size.X * AnimKit.ROSTO_TAM
-	placa.Size = Vector3.new(tam, tam, 0.05)
+	placa.Size = Vector3.new(head.Size.X * AnimKit.ROSTO_TAM, head.Size.Y * AnimKit.ROSTO_TAM, 0.05)
 	placa.Transparency = 1
 	placa.CanCollide = false
 	placa.CanQuery = false
@@ -136,6 +167,8 @@ local function rostoGui(noob)
 	placa.CastShadow = false
 	placa.Anchored = false
 	placa.CFrame = head.CFrame * CFrame.new(0, AnimKit.ROSTO_Y * head.Size.Y, -AnimKit.ROSTO_Z * head.Size.Z - 0.01)
+	placa:SetAttribute("FaixaTopo", AnimKit.ROSTO_FAIXA[1])
+	placa:SetAttribute("FaixaBase", AnimKit.ROSTO_FAIXA[2])
 	local solda = Instance.new("WeldConstraint")
 	solda.Part0 = head
 	solda.Part1 = placa
@@ -146,66 +179,70 @@ local function rostoGui(noob)
 	gui.Name = "RostoGui"
 	gui.Face = Enum.NormalId.Front
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	gui.PixelsPerStud = 260
-	gui.LightInfluence = 0.12
+	gui.PixelsPerStud = 320
+	gui.LightInfluence = AnimKit.ROSTO_LUZ
 	gui.Parent = placa
 
 	for _, lado in ipairs({ "E", "D" }) do
 		local x = OLHO.x[lado]
-		local olho = frame("Olho" .. lado, gui, BRANCO, UDim2.fromScale(x, OLHO.y), UDim2.fromScale(OLHO.w, OLHO.h), 2, true)
-		contorno(olho, 9)
-		frame("Pupila", olho, PRETO, UDim2.fromScale(0.5, 0.56), UDim2.fromScale(0.32, 0.36), 3, true)
-		-- Olho apertado (>_<): dois tracos que se encontram do lado de dentro.
-		local fechado = vazio("Fechado" .. lado, gui, UDim2.fromScale(x, OLHO.y), UDim2.fromScale(OLHO.w, OLHO.h), 2)
-		fechado.Visible = false
+		-- Olho: elipse preta (o contorno) com a branca dentro; pupila e brilho dentro da branca.
+		local olho = elipse("Olho" .. lado, gui, PRETO, UDim2.fromScale(x, OLHO.y), UDim2.fromScale(OLHO.w, OLHO.h), 2)
+		local branco = elipse("Branco", olho, BRANCO_OLHO, UDim2.fromScale(0.5, 0.5),
+			UDim2.fromScale(1 - 2 * OLHO.borda / OLHO.w, 1 - 2 * OLHO.borda / OLHO.h), 3)
+		local pupila = elipse("Pupila", branco, PRETO, UDim2.fromScale(0.5, PUPILA.y), UDim2.fromScale(PUPILA.w, PUPILA.h), 4)
+		elipse("Brilho", pupila, BRANCO, UDim2.fromScale(0.38, 0.25), UDim2.fromScale(0.38, 0.24), 5)
+		-- Olhos apertados (>_<) e nocaute (X): tracos grossos no lugar do olho.
 		local sinal = lado == "E" and 1 or -1
-		for i, dy in ipairs({ -0.14, 0.14 }) do
-			local t = frame("Traco" .. i, fechado, PRETO, UDim2.fromScale(0.5, 0.5 + dy), UDim2.fromScale(0.85, 0.1), 4, true)
-			t.Rotation = (i == 1 and 26 or -26) * sinal
+		local fechado = vazio("Fechado" .. lado, gui, UDim2.fromScale(x, OLHO.y), UDim2.fromScale(OLHO.w, OLHO.h), 2)
+		for i, dy in ipairs({ -0.1, 0.1 }) do
+			local t = frame("Traco" .. i, fechado, PRETO, UDim2.fromScale(0.5, 0.5 + dy), UDim2.fromScale(0.9, 0.09), 4, true)
+			t.Rotation = (i == 1 and 24 or -24) * sinal
 		end
-		frame("Palpebra" .. lado, gui, AnimKit.CORES.pele, UDim2.fromScale(x, OLHO.y - OLHO.h / 2), UDim2.fromScale(OLHO.w + 0.05, 0), 5)
-		frame("Sobrancelha" .. lado, gui, PRETO, UDim2.fromScale(x, OLHO.y - OLHO.h / 2 - 0.075), UDim2.fromScale(0.25, 0.058), 6, true)
-		local boch = frame("Bochecha" .. lado, gui, Color3.fromRGB(255, 140, 105), UDim2.fromScale(lado == "E" and 0.2 or 0.8, 0.665),
-			UDim2.fromScale(0.1, 0.066), 4, 0.35)
-		boch.BackgroundTransparency = 0.08
+		local xis = vazio("Xis" .. lado, gui, UDim2.fromScale(x, OLHO.y), UDim2.fromScale(OLHO.w, OLHO.h), 2)
+		for i, r in ipairs({ 45, -45 }) do
+			frame("Traco" .. i, xis, PRETO, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.95, 0.09), 4, true).Rotation = r
+		end
+		fechado.Visible, xis.Visible = false, false
+		frame("Sobrancelha" .. lado, gui, PRETO, UDim2.fromScale(x, OLHO.y - OLHO.h / 2 - SOBRANCELHA.acima),
+			UDim2.fromScale(SOBRANCELHA.w, SOBRANCELHA.h), 6, 0.45)
+		local boch = elipse("Bochecha" .. lado, gui, Color3.fromRGB(255, 128, 118),
+			UDim2.fromScale(lado == "E" and 0.17 or 0.83, 0.64), UDim2.fromScale(0.1, 0.055), 4)
+		boch.ImageTransparency = 0.2
 	end
 
-	-- Bocas: so uma visivel por vez.
+	-- Bocas (so uma visivel por vez): escuras com lingua, como nas referencias.
 	local bocas = vazio("Bocas", gui, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(1, 1), 2)
 	local p = UDim2.fromScale(0.5, BOCA_Y)
-	frame("o", bocas, PRETO, p, UDim2.fromScale(0.1, 0.11), 3, true)
-	frame("reta", bocas, PRETO, p, UDim2.fromScale(0.17, 0.032), 3, true)
-	local grito = frame("grito", bocas, Color3.fromRGB(20, 8, 8), UDim2.fromScale(0.5, BOCA_Y + 0.01), UDim2.fromScale(0.2, 0.25), 3, true)
-	frame("Lingua", grito, ROSA, UDim2.fromScale(0.5, 0.8), UDim2.fromScale(0.52, 0.26), 4, true)
-	local lingua = frame("lingua", bocas, Color3.fromRGB(20, 8, 8), p, UDim2.fromScale(0.15, 0.085), 3, 0.4)
-	contorno(lingua, 4)
-	frame("Lingua", lingua, ROSA, UDim2.fromScale(0.5, 0.72), UDim2.fromScale(0.72, 0.56), 4, 0.5)
-	local dentes = frame("dentes", bocas, BRANCO, p, UDim2.fromScale(0.23, 0.12), 3, 0.32)
-	contorno(dentes, 7)
-	frame("Linha", dentes, Color3.fromRGB(70, 70, 70), UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.86, 0.06), 4, true)
-	for _, nome in ipairs({ "sorriso", "aberto" }) do
-		local larg = nome == "sorriso" and 0.2 or 0.26
-		local alt = nome == "sorriso" and 0.075 or 0.12
-		local caixa = vazio(nome, bocas, UDim2.fromScale(0.5, BOCA_Y - 0.01), UDim2.fromScale(larg, alt), 3)
-		caixa.ClipsDescendants = true
-		local meia = frame("Meia", caixa, Color3.fromRGB(20, 8, 8), UDim2.fromScale(0.5, 0), UDim2.fromScale(1, 2), 4, true)
-		if nome == "aberto" then
-			frame("Lingua", meia, ROSA, UDim2.fromScale(0.5, 0.86), UDim2.fromScale(0.55, 0.2), 5, true)
-		end
+	frame("reta", bocas, PRETO, p, UDim2.fromScale(0.12, 0.024), 3, true)
+	elipse("o", bocas, ESCURO, p, UDim2.fromScale(0.08, 0.1), 3)
+	local function aberta(nome, larg, alt)
+		local b = frame(nome, bocas, ESCURO, p, UDim2.fromScale(larg, alt), 3, 0.42)
+		elipse("Lingua", b, LINGUA, UDim2.fromScale(0.5, 0.78), UDim2.fromScale(0.5, 0.4), 4)
+		return b
 	end
-	-- Boca de fala: abre e fecha guiada pelo volume da voz real (AnimKit.falar).
-	local fala = frame("fala", bocas, Color3.fromRGB(20, 8, 8), UDim2.fromScale(0.5, BOCA_Y), UDim2.fromScale(0.17, 0.035), 3, 0.45)
-	contorno(fala, 5)
-	fala.ClipsDescendants = true
-	frame("Lingua", fala, ROSA, UDim2.fromScale(0.5, 0.92), UDim2.fromScale(0.6, 0.42), 4, 0.5)
-	frame("Dentes", fala, BRANCO, UDim2.fromScale(0.5, 0.0), UDim2.fromScale(0.8, 0.3), 4, 0.3)
+	aberta("medo", 0.12, 0.09)
+	aberta("grito", 0.22, 0.19)
+	aberta("fala", FALA[1][1], FALA[1][2])
+	-- Sorriso aberto ("D"): metade de baixo de uma elipse escura, com lingua.
+	local caixa = vazio("aberto", bocas, UDim2.fromScale(0.5, BOCA_Y - 0.02), UDim2.fromScale(0.18, 0.1), 3)
+	caixa.ClipsDescendants = true
+	local meia = elipse("Meia", caixa, ESCURO, UDim2.fromScale(0.5, 0), UDim2.fromScale(1, 2), 4)
+	elipse("Lingua", meia, LINGUA, UDim2.fromScale(0.5, 0.82), UDim2.fromScale(0.5, 0.22), 5)
+	-- Sorriso fechado: meia elipse preta com a cor da pele por cima, sobrando so o traco de baixo.
+	local sorriso = vazio("sorriso", bocas, UDim2.fromScale(0.5, BOCA_Y - 0.015), UDim2.fromScale(0.16, 0.07), 3)
+	sorriso.ClipsDescendants = true
+	elipse("Traco", sorriso, PRETO, UDim2.fromScale(0.5, 0), UDim2.fromScale(1, 2), 4)
+	elipse("Pele", sorriso, AnimKit.CORES.pele, UDim2.fromScale(0.5, -0.1), UDim2.fromScale(0.86, 1.6), 5)
+	local dentes = frame("dentes", bocas, BRANCO, p, UDim2.fromScale(0.2, 0.085), 3, 0.32)
+	contorno(dentes, 6)
+	frame("Linha", dentes, Color3.fromRGB(70, 70, 70), UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.86, 0.07), 4, true)
 	for _, b in ipairs(bocas:GetChildren()) do
 		b.Visible = b.Name == "reta"
 	end
 
-	local suor = frame("Suor", gui, Color3.fromRGB(125, 205, 245), UDim2.fromScale(0.85, 0.36), UDim2.fromScale(0.075, 0.13), 7, true)
-	contorno(suor, 4, Color3.fromRGB(25, 90, 160))
-	suor.Rotation = -8
+	-- Gota de suor na tempora, verde-agua com contorno escuro (como nas referencias).
+	local suor = elipse("Suor", gui, Color3.fromRGB(32, 92, 84), UDim2.fromScale(0.87, 0.42), UDim2.fromScale(0.07, 0.15), 7)
+	elipse("Gota", suor, Color3.fromRGB(150, 222, 196), UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.72, 0.86), 8)
 	suor.Visible = false
 	return gui
 end
@@ -409,7 +446,7 @@ function AnimKit.visual()
 	L.EnvironmentSpecularScale = 0.6
 	L.Ambient = Color3.fromRGB(110, 110, 120)
 	L.OutdoorAmbient = Color3.fromRGB(150, 150, 160)
-	for _, nome in ipairs({ "AK_Cor", "AK_Bloom", "AK_Atmos" }) do
+	for _, nome in ipairs({ "AK_Cor", "AK_Bloom", "AK_Atmos", "AK_Foco" }) do
 		local o = L:FindFirstChild(nome)
 		if o then o:Destroy() end
 	end
@@ -431,6 +468,14 @@ function AnimKit.visual()
 	at.Haze = 0.6
 	at.Color = Color3.fromRGB(200, 225, 255)
 	at.Parent = L
+	-- Fundo desfocado como nas referencias; o foco segue a cabeca (AnimKit.foco) a cada quadro.
+	local dof = Instance.new("DepthOfFieldEffect")
+	dof.Name = "AK_Foco"
+	dof.FarIntensity = 0.4
+	dof.NearIntensity = 0
+	dof.FocusDistance = 8
+	dof.InFocusRadius = 6
+	dof.Parent = L
 	Players.CharacterAutoLoads = false
 end
 
@@ -439,87 +484,183 @@ end
 --------------------------------------------------------------------------------------------
 
 -- Expressoes calibradas pelos quadros das referencias.
--- olho/pupila: escala; palpebra: fracao do olho coberta; sobE/sobD: rotacao das sobrancelhas
--- (negativo na esquerda = ponta de dentro para cima, cara de preocupado); sobY: deslocamento;
--- boca: nome da boca; suor; fechado: olhos >_<; tonto: pupilas desencontradas.
+-- olho/pupila: escala; sobE/sobD: rotacao das sobrancelhas (negativo na esquerda = ponta de dentro
+-- para cima, cara de preocupado; sobD espelha sobE se omitido); sobY: desce (+) ou sobe (-) as
+-- sobrancelhas (bravo/confiante descem ate encostar no olho); boca: nome da boca; suor;
+-- fechado: olhos >_<; xis: olhos de nocaute; tonto: pupilas girando.
 local EXPR = {
-	normal = { olho = 1, pupila = 1, palpebra = 0, sobE = -3, sobY = 0, boca = "reta" },
-	feliz = { olho = 0.92, pupila = 1.08, palpebra = 0, sobE = -8, sobY = -0.02, boca = "aberto" },
-	surpreso = { olho = 1.12, pupila = 0.74, palpebra = 0, sobE = 0, sobY = -0.05, boca = "o" },
-	medo = { olho = 1.1, pupila = 0.7, palpebra = 0, sobE = -17, sobY = -0.03, boca = "lingua", suor = true },
-	grito = { olho = 1.13, pupila = 0.64, palpebra = 0, sobE = -19, sobY = -0.04, boca = "grito", suor = true },
-	nervoso = { olho = 1.04, pupila = 0.82, palpebra = 0, sobE = -15, sobY = -0.02, boca = "dentes", suor = true },
-	confiante = { olho = 0.95, pupila = 1.05, palpebra = 0.36, sobE = 13, sobY = 0.01, boca = "sorriso" },
-	bravo = { olho = 0.95, pupila = 1, palpebra = 0.26, sobE = 24, sobY = 0.03, boca = "reta" },
-	duvida = { olho = 1, pupila = 0.9, palpebra = 0.1, sobE = -20, sobD = -6, sobY = -0.01, boca = "reta" },
-	tonto = { olho = 1.05, pupila = 0.58, palpebra = 0.12, sobE = -10, sobY = 0, boca = "o", suor = true, tonto = true },
-	apertado = { olho = 1, pupila = 1, palpebra = 0, sobE = 18, sobY = 0.02, boca = "grito", suor = true, fechado = true },
+	normal = { olho = 1, pupila = 1, sobE = -4, sobY = 0, boca = "reta" },
+	feliz = { olho = 0.96, pupila = 1.05, sobE = -6, sobY = -0.02, boca = "aberto" },
+	surpreso = { olho = 1.08, pupila = 0.75, sobE = 0, sobY = -0.05, boca = "o" },
+	medo = { olho = 1.08, pupila = 0.7, sobE = -18, sobY = -0.03, boca = "medo", suor = true },
+	grito = { olho = 1.1, pupila = 0.62, sobE = -20, sobY = -0.05, boca = "grito", suor = true },
+	nervoso = { olho = 1.03, pupila = 0.8, sobE = -15, sobY = -0.02, boca = "dentes", suor = true },
+	confiante = { olho = 0.94, pupila = 1.05, sobE = 14, sobY = 0.045, boca = "sorriso" },
+	bravo = { olho = 0.92, pupila = 1, sobE = 24, sobY = 0.055, boca = "reta" },
+	duvida = { olho = 1, pupila = 0.9, sobE = -20, sobD = -4, sobY = -0.02, boca = "reta" },
+	tonto = { olho = 1.02, pupila = 0.6, sobE = -8, sobY = 0, boca = "o", suor = true, tonto = true },
+	apertado = { olho = 1, pupila = 1, sobE = 18, sobY = 0.03, boca = "grito", suor = true, fechado = true },
+	nocaute = { olho = 1, pupila = 1, sobE = -6, sobY = 0, boca = "reta", xis = true },
 }
 AnimKit.EXPRESSOES = EXPR
 
-local function gui(noob)
-	return noob.RostoPlaca.RostoGui
+-- Um controlador por noob aplica tudo a cada quadro (expressao, piscada, olhar, fala): antes cada
+-- coisa tinha o seu tween no mesmo Size e uma piscada no meio de uma troca de expressao deixava o
+-- olho travado pequeno ("animacao quebrando").
+local faces = {} -- noob -> estado (tabela forte)
+local NUMEROS = { "olho", "pupila", "sobE", "sobD", "sobY" }
+
+local function alvoDe(expr)
+	local e = EXPR[expr]
+	return { olho = e.olho, pupila = e.pupila, sobE = e.sobE, sobD = e.sobD or e.sobE, sobY = e.sobY }
 end
 
-function AnimKit.rosto(noob, expr, t)
-	local e = EXPR[expr] or error("expressao desconhecida: " .. tostring(expr))
-	t = t or 0.12
-	local g = gui(noob)
-	for _, lado in ipairs({ "E", "D" }) do
-		local x = OLHO.x[lado]
-		local olho = g["Olho" .. lado]
-		local h = OLHO.h * e.olho
-		olho.Visible = not e.fechado
-		g["Fechado" .. lado].Visible = e.fechado == true
-		tween(olho, t, { Size = UDim2.fromScale(OLHO.w * e.olho, h) }, Enum.EasingStyle.Back)
-		tween(olho.Pupila, t, { Size = UDim2.fromScale(0.32 * e.pupila, 0.36 * e.pupila) })
-		if e.tonto then
-			tween(olho.Pupila, t, { Position = lado == "E" and UDim2.fromScale(0.35, 0.36) or UDim2.fromScale(0.66, 0.74) })
+local function estadoDe(noob)
+	local e = faces[noob]
+	if not e then
+		e = { expr = "normal", alvo = alvoDe("normal"), atual = alvoDe("normal"), suave = 0.05,
+			olhar = Vector2.zero, olharAtual = Vector2.zero, olharSuave = 0.05,
+			piscarAuto = false, proxPiscada = os.clock() + 1.2, piscada = nil,
+			fala = nil, nivel = 0, ate = 0, bocaW = FALA[1][1], bocaH = FALA[1][2], sobFala = 0 }
+		faces[noob] = e
+	end
+	return e
+end
+
+local function atualizarRosto(noob, e, dt)
+	local placa = noob:FindFirstChild("RostoPlaca")
+	local g = placa and placa:FindFirstChild("RostoGui")
+	if not g then return end
+	local ex = EXPR[e.expr]
+	local agora = os.clock()
+	local k = 1 - math.exp(-dt / e.suave)
+	for _, n in ipairs(NUMEROS) do
+		e.atual[n] += (e.alvo[n] - e.atual[n]) * k
+	end
+	e.olharAtual += (e.olhar - e.olharAtual) * (1 - math.exp(-dt / e.olharSuave))
+
+	-- Piscada: o olho (e a pupila junto) achata ate quase fechar e volta, em 0,16 s.
+	local aberto = 1
+	if e.piscarAuto and not ex.fechado and not ex.xis then
+		if not e.piscada and agora >= e.proxPiscada then e.piscada = agora end
+		if e.piscada then
+			local u = (agora - e.piscada) / 0.16
+			if u >= 1 then
+				e.piscada = nil
+				e.proxPiscada = agora + 2.0 + math.random() * 2.5
+			else
+				aberto = 1 - 0.92 * math.sin(math.pi * u)
+			end
 		end
-		local topo = OLHO.y - h / 2
-		tween(g["Palpebra" .. lado], t, { Position = UDim2.fromScale(x, topo + h * e.palpebra / 2),
-			Size = UDim2.fromScale(OLHO.w * e.olho + 0.05, h * e.palpebra + (e.palpebra > 0 and 0.01 or 0)) })
-		local rot = lado == "E" and e.sobE or -(e.sobD or e.sobE)
-		tween(g["Sobrancelha" .. lado], t, { Rotation = rot, Position = UDim2.fromScale(x, topo - 0.075 + e.sobY) })
 	end
-	noob:SetAttribute("Expressao", expr)
-	local falando = (noob:GetAttribute("Falando") or 0) > 0
+
+	-- Fala: 3 bocas abertas + fechada, escolhidas pelo volume da voz real; cada boca fica pelo
+	-- menos 60 ms (sem tremer) e as sobrancelhas sobem junto com a enfase.
+	local falando = false
+	if e.fala then
+		local f = (agora - e.fala.t0) * e.fala.fps
+		local i = math.floor(f) + 1
+		if i > #e.fala.env then
+			e.fala = nil
+		else
+			falando = true
+			local a = (tonumber(e.fala.env:sub(i, i)) or 0) / 9
+			local b = (tonumber(e.fala.env:sub(i + 1, i + 1)) or 0) / 9
+			local v = (a + (b - a) * (f % 1)) * e.fala.abertura
+			local nivel = v < 0.1 and 0 or v < 0.32 and 1 or v < 0.6 and 2 or 3
+			if nivel ~= e.nivel and agora >= e.ate then
+				e.nivel = nivel
+				e.ate = agora + 0.06
+			end
+			e.sobFala += (math.min(v * 1.3, 1) - e.sobFala) * (1 - math.exp(-dt / 0.08))
+		end
+	end
+	if not falando then
+		e.nivel = 0
+		e.sobFala += (0 - e.sobFala) * (1 - math.exp(-dt / 0.12))
+	end
+
+	for _, lado in ipairs({ "E", "D" }) do
+		local olho = g["Olho" .. lado]
+		olho.Visible = not ex.fechado and not ex.xis
+		g["Fechado" .. lado].Visible = ex.fechado == true
+		g["Xis" .. lado].Visible = ex.xis == true
+		olho.Size = UDim2.fromScale(OLHO.w * e.atual.olho, OLHO.h * e.atual.olho * aberto)
+		local pup = olho.Branco.Pupila
+		pup.Size = UDim2.fromScale(PUPILA.w * e.atual.pupila, PUPILA.h * e.atual.pupila)
+		local dx, dy = e.olharAtual.X, e.olharAtual.Y
+		if ex.tonto then
+			local ang = agora * 7 * (lado == "E" and 1 or -1)
+			dx, dy = 0.45 * math.cos(ang), 0.4 * math.sin(ang)
+		end
+		pup.Position = UDim2.fromScale(0.5 + 0.24 * dx, PUPILA.y + 0.17 * dy)
+		local topo = OLHO.y - OLHO.h * e.atual.olho / 2 -- a sobrancelha nao desce junto com a piscada
+		local s = g["Sobrancelha" .. lado]
+		s.Rotation = lado == "E" and e.atual.sobE or -e.atual.sobD
+		s.Position = UDim2.fromScale(OLHO.x[lado],
+			math.max(SOBRANCELHA.minimo, topo - SOBRANCELHA.acima + e.atual.sobY - 0.035 * e.sobFala))
+	end
+
+	local visivel = falando and (e.nivel > 0 and "fala" or "reta") or ex.boca
 	for _, b in ipairs(g.Bocas:GetChildren()) do
-		b.Visible = (falando and b.Name == "fala") or (not falando and b.Name == e.boca)
+		b.Visible = b.Name == visivel
 	end
-	g.Suor.Visible = e.suor == true
+	if visivel == "fala" then
+		local alvo = FALA[e.nivel]
+		local kb = 1 - math.exp(-dt / 0.03)
+		e.bocaW += (alvo[1] - e.bocaW) * kb
+		e.bocaH += (alvo[2] - e.bocaH) * kb
+		local fala = g.Bocas.fala
+		fala.Size = UDim2.fromScale(e.bocaW, e.bocaH)
+		fala.Position = UDim2.fromScale(0.5, BOCA_Y + e.bocaH * 0.25) -- abre para baixo, como queixo
+		fala.Lingua.Visible = e.nivel >= 2
+	else
+		e.bocaW, e.bocaH = FALA[1][1], FALA[1][2]
+	end
+	g.Suor.Visible = ex.suor == true
+end
+
+-- So o cliente em Play anima o rosto; montar a cena no modo edicao fica sem efeitos colaterais.
+if RunService:IsClient() and RunService:IsRunning() then
+	RunService:BindToRenderStep("AnimKitRosto", Enum.RenderPriority.Camera.Value + 3, function(dt)
+		for noob, e in pairs(faces) do
+			if noob.Parent then
+				atualizarRosto(noob, e, dt)
+			else
+				faces[noob] = nil
+			end
+		end
+	end)
+end
+
+-- Troca a expressao; t: tempo da transicao (segundos).
+function AnimKit.rosto(noob, expr, t)
+	if not EXPR[expr] then error("expressao desconhecida: " .. tostring(expr)) end
+	local e = estadoDe(noob)
+	e.expr = expr
+	e.alvo = alvoDe(expr)
+	e.suave = math.max(0.01, (t or 0.12) / 3)
+	noob:SetAttribute("Expressao", expr)
 end
 
 -- Sincronia labial: env e uma string de digitos 0-9 (volume da voz, um por quadro a 'fps'),
--- calculada do MP3 real da fala. Enquanto fala, a boca de fala substitui a da expressao.
+-- calculada do MP3 real da fala (scripts/envelope_boca.py). Enquanto fala, a boca de fala
+-- substitui a da expressao e as sobrancelhas sobem na enfase.
 function AnimKit.falar(noob, env, fps, abertura)
-	fps = fps or 30
-	abertura = abertura or 1
-	local g = gui(noob)
-	local fala = g.Bocas.fala
-	local n = #env
-	noob:SetAttribute("Falando", (noob:GetAttribute("Falando") or 0) + 1)
-	for _, b in ipairs(g.Bocas:GetChildren()) do b.Visible = b.Name == "fala" end
-	local t0 = os.clock()
-	local con
-	con = RunService.RenderStepped:Connect(function()
-		local f = (os.clock() - t0) * fps
-		local i = math.floor(f) + 1
-		if i > n then
-			con:Disconnect()
-			noob:SetAttribute("Falando", math.max(0, (noob:GetAttribute("Falando") or 1) - 1))
-			if (noob:GetAttribute("Falando") or 0) == 0 then
-				AnimKit.rosto(noob, noob:GetAttribute("Expressao") or "normal", 0.08)
-			end
-			return
-		end
-		local a = (tonumber(env:sub(i, i)) or 0) / 9
-		local b = (tonumber(env:sub(i + 1, i + 1)) or 0) / 9
-		local v = a + (b - a) * (f % 1)
-		local open = math.clamp(v * 1.25, 0, 1) ^ 0.8 * abertura
-		fala.Size = UDim2.fromScale(0.15 + 0.09 * open, 0.03 + 0.21 * open)
-		fala.Position = UDim2.fromScale(0.5, BOCA_Y + 0.07 * open)
-	end)
+	local e = estadoDe(noob)
+	e.fala = { env = env, fps = fps or 30, abertura = abertura or 1, t0 = os.clock() }
+end
+
+-- Direcao do olhar: dx/dy de -1 a 1.
+function AnimKit.olhar(noob, dx, dy, t)
+	local e = estadoDe(noob)
+	e.olhar = Vector2.new(dx, dy)
+	e.olharSuave = math.max(0.01, (t or 0.15) / 3)
+end
+
+-- Piscadas automaticas enquanto a cena roda.
+function AnimKit.piscar(noob)
+	estadoDe(noob).piscarAuto = true
 end
 
 -- Pose fixa por cima das animacoes (ex.: sentado com as pernas esticadas para a frente, para
@@ -556,32 +697,6 @@ function AnimKit.pose(noob, nome)
 		end
 	end
 	poses[noob] = nome
-end
-
--- Direcao do olhar: dx/dy de -1 a 1.
-function AnimKit.olhar(noob, dx, dy, t)
-	local g = gui(noob)
-	for _, lado in ipairs({ "E", "D" }) do
-		tween(g["Olho" .. lado].Pupila, t or 0.15, { Position = UDim2.fromScale(0.5 + 0.2 * dx, 0.56 + 0.17 * dy) })
-	end
-end
-
--- Piscadas automaticas enquanto a cena roda.
-function AnimKit.piscar(noob)
-	task.spawn(function()
-		while noob.Parent do
-			task.wait(2.2 + math.random() * 2.5)
-			local g = gui(noob)
-			for _, lado in ipairs({ "E", "D" }) do
-				local olho = g["Olho" .. lado]
-				if olho.Visible then
-					local s = olho.Size
-					tween(olho, 0.06, { Size = UDim2.new(s.X.Scale, 0, 0.025, 0) })
-					task.delay(0.1, function() tween(olho, 0.07, { Size = s }) end)
-				end
-			end
-		end
-	end)
 end
 
 local cacheAnim = {} -- tabela forte: com chaves fracas o Roblox pode coletar o proxy da Instance e perder a entrada
@@ -659,6 +774,8 @@ function AnimKit.deslizar(noob, pontos, t, anim, aoTerminar)
 		local cfs = {}
 		for i = 1, #pontos do cfs[i] = cfPonto(i) end
 		local t0 = os.clock()
+		-- Primeira posicao ja no assento inclinado, no mesmo quadro do corte (sem um quadro sentado reto).
+		r.CFrame = cfs[1]
 		local con
 		con = RunService.Heartbeat:Connect(function()
 			local k = math.clamp((os.clock() - t0) / t, 0, 1)
@@ -685,6 +802,19 @@ function AnimKit.sentarEm(noob, ponto, frente)
 	-- A pose so e aplicada no proximo quadro: espera um quadro antes de mover o corpo para o assento.
 	RunService.Heartbeat:Wait()
 	raiz(noob).CFrame = CFrame.lookAt(ponto, ponto + (frente or Vector3.new(0, 0, -1)))
+end
+
+-- Corte para outro lugar com outra animacao, sem o quadro do "noob sentado no lugar novo": o
+-- Animator so aplica a animacao (e a pose) no passo seguinte. Troca agora, ainda no plano antigo
+-- (a tela nao muda nesse quadro), e so no quadro seguinte muda o noob de lugar e corta a camera.
+-- camera: funcao com os cortes/movimentos do plano novo.
+function AnimKit.cortarPara(noob, cf, anim, camera, opcoes)
+	opcoes = opcoes or {}
+	AnimKit.anim(noob, anim, { fade = 0, loop = opcoes.loop })
+	if opcoes.pose then AnimKit.pose(noob, opcoes.pose) end
+	RunService.Heartbeat:Wait()
+	raiz(noob).CFrame = cf
+	if camera then camera() end
 end
 
 -- Carrega todas as animacoes antes da cena: na primeira vez que uma animacao toca ela ainda esta
@@ -891,6 +1021,7 @@ end
 
 -- Only the playing client drives the camera; requiring the kit in edit mode must stay side-effect free.
 if RunService:IsClient() and RunService:IsRunning() then
+	local dof = game:GetService("Lighting"):FindFirstChild("AK_Foco")
 	RunService:BindToRenderStep("AnimKitCamera", Enum.RenderPriority.Camera.Value + 1, function()
 		if workspace.CurrentCamera.CameraType ~= Enum.CameraType.Scriptable then return end
 		if seguindo then
@@ -902,6 +1033,13 @@ if RunService:IsClient() and RunService:IsRunning() then
 			end
 		end
 		aplicar(base)
+		-- Foco na cabeca do protagonista: closes com o fundo bem desfocado, planos abertos menos.
+		dof = dof or game:GetService("Lighting"):FindFirstChild("AK_Foco")
+		if dof and AnimKit._foco and AnimKit._foco.Parent then
+			local d = (workspace.CurrentCamera.CFrame.Position - AnimKit._foco.Position).Magnitude
+			dof.FocusDistance = d
+			dof.InFocusRadius = math.clamp(d * 0.45, 2.5, 30)
+		end
 	end)
 end
 
@@ -938,9 +1076,36 @@ end
 
 -- eventos: { {t = 0.0, f = function() ... end}, ... }  (t em segundos desde o t=0 da timeline)
 -- duracao: tempo total da cena; um segundo flash magenta marca o fim.
+-- Marca de sincronia: um retangulo magenta no alto do viewport, na faixa que a gravacao corta
+-- (botoes do Roblox). Acende no mesmo passo dos eventos da cena, entao o quadro em que ela aparece
+-- na gravacao mede o atraso real entre agendar e aparecer (captura_janela.medir_sincronia).
+AnimKit.MARCAS = 5 -- segundos entre marcas de sincronia (0 desliga)
+local function marca(t)
+	local pg = Players.LocalPlayer:WaitForChild("PlayerGui")
+	local g = Instance.new("ScreenGui")
+	g.Name = "AnimKitMarca"
+	g.IgnoreGuiInset = true
+	g.DisplayOrder = 1e6
+	g.ScreenInsets = Enum.ScreenInsets.None
+	local f = Instance.new("Frame")
+	f.AnchorPoint = Vector2.new(0.5, 0)
+	f.Position = UDim2.new(0.5, 0, 0, 2)
+	f.Size = UDim2.new(0, 160, 0, 14)
+	f.BackgroundColor3 = Color3.fromRGB(255, 0, 255)
+	f.BorderSizePixel = 0
+	f.Parent = g
+	g.Parent = pg
+	task.delay(t, function() g:Destroy() end)
+end
+
 function AnimKit.rodar(eventos, duracao)
 	esconderInterface()
 	workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+	if AnimKit.MARCAS and AnimKit.MARCAS > 0 then
+		for tm = 0.5, duracao - 0.2, AnimKit.MARCAS do
+			eventos[#eventos + 1] = { t = tm, f = function() marca(0.12) end }
+		end
+	end
 	table.sort(eventos, function(a, b) return a.t < b.t end)
 	-- Primeiro quadro ja enquadrado (evita a camera padrao no inicio da gravacao).
 	for _, e in ipairs(eventos) do
@@ -1132,8 +1297,11 @@ function AnimKit.auditarCamera(noob, minimo)
 				-- das legendas, com folga para o zoom que a edicao aplica nas cenas de acao.
 				local placa = noob:FindFirstChild("RostoPlaca")
 				if placa and ang <= 100 then
-					local m = placa.Size.Y / 2
-					local a, b = video(placa.CFrame * CFrame.new(0, m, 0)), video(placa.CFrame * CFrame.new(0, -m, 0))
+					-- So a area desenhada (sobrancelha ate o fim da boca de grito), nao a placa inteira.
+					local h = placa.Size.Y
+					local cima = (0.5 - (placa:GetAttribute("FaixaTopo") or 0)) * h
+					local baixo = (0.5 - (placa:GetAttribute("FaixaBase") or 1)) * h
+					local a, b = video(placa.CFrame * CFrame.new(0, cima, 0)), video(placa.CFrame * CFrame.new(0, baixo, 0))
 					local f0, f1 = AnimKit.FAIXA_LEGENDA[1], AnimKit.FAIXA_LEGENDA[2]
 					if math.max(a.Y, b.Y) > f0 and math.min(a.Y, b.Y) < f1 then
 						agora["rosto na faixa da legenda"] = true
@@ -1176,6 +1344,11 @@ function AnimKit.auditarCamera(noob, minimo)
 		end
 		print(string.format("[camera] total %d problema(s)", n))
 	end
+end
+
+-- Parte em que a camera foca (normalmente noob.Head); nil volta o foco fixo.
+function AnimKit.foco(parte)
+	AnimKit._foco = parte
 end
 
 -- Ends an automated play session (gravacao): the server Script installed by the pipeline

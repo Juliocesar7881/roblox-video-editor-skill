@@ -17,6 +17,16 @@ Regras do sistema do amigo do usuário, adaptadas a esta skill. Valem para todo 
 - Planos sem o protagonista (mostrar as opções) são insertos curtos, marcados com `K.inserto(true)`.
 - `K.auditarCamera` precisa terminar com zero problemas, junto com `K.auditar` (colisões).
 
+## Rosto (feedback do cliente: "o rosto tá diferente", "o olho tá muito colado")
+- Igual às referências: olhos ovais altos (altura ~1,85× a largura, cada um ~0,25 da largura da cabeça) com um vão visível entre eles (~0,08), contorno preto grosso, pupila preta estreita com brilho, sobrancelhas grossas logo acima dos olhos (nunca na borda de cima da cabeça), bochechas rosadas, gota de suor verde-água e boca escura com língua rosa.
+- O desenho recebe a luz da cena (o branco do olho escurece na sombra junto com a cabeça); nada de peças da cor da pele por cima do rosto (ficam com outra luz e aparecem como faixas).
+- Animação do rosto como nas referências: piscada que achata o olho, pupilas olhando em volta, sobrancelhas que sobem na ênfase da fala e boca em poucas aberturas firmes (sem tremer).
+
+## Transições (feedback: "as transições ficaram meio cagadas, parece bug")
+- Corte seco, sem flash branco nem efeito no corte. Na troca de lugar, o primeiro quadro do plano novo já tem a pose certa (`K.cortarPara`).
+- Movimento encadeado (descida → voo → pouso) termina no tempo da timeline; o corte do pouso acontece no pouso real.
+- Sincronia de quadro: boca, cortes e efeitos sonoros no mesmo quadro (marcas de sincronia na gravação).
+
 ## Colisões em 5 tempos
 1. Ameaça (≥ 0,6 s): o obstáculo aparece antes, com close no rosto.
 2. Aceleração (0,4–0,8 s): personagem e obstáculo no mesmo quadro.

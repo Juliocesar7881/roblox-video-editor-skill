@@ -1,5 +1,11 @@
 # Validação antes da publicação
 
+## v1.7.0 (11 de outubro de 2026)
+
+- 31 testes passaram, incluindo: gravador reamostrando pelo tempo de captura (A A A B C C C D); marcas de sincronia medindo um atraso injetado de 0,05 s (±0,02); geometria do rosto (vão entre os olhos ≥ 0,06, altura/largura 1,6–2,1); proteções de corte (`K.cortarPara`, deslizar inclinado no 1º quadro, sem parar todas as animações no pouso).
+- Teste no Studio: cortes de câmera agendados em 2,0 / 6,0 / 9,0 s apareceram em 2,000 / 6,000 / 9,000 s depois da compensação.
+- Piloto regravado: `[auditoria] total 0`, `[camera] total 0`, `[legenda] total 0`; 13 cortes a ±2 quadros do planejado; boca abrindo junto com a voz (24,63 s × 24,66 s); quadro a quadro (60 fps) em volta de cada corte sem pose errada; −14,1 LUFS, pico −1,9 dBTP; Whisper transcreve as 9 falas.
+
 ## v1.6.0 (11 de outubro de 2026)
 
 - 27 testes passaram, incluindo: legendas do piloto sem sobreposição e sem destaque < 0,16 s; `revisar_legendas.py` acusando sobreposição, pisca, quebra em duas linhas e legenda junto com selo; rangido do `escorregar-trava` terminando aos 2,0 s e silêncio depois; a conta de posição da auditoria de câmera batendo (±1%) com um marcador processado de verdade por `captura_janela.processar`.

@@ -1,5 +1,12 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.7.0 — rosto igual às referências, cortes limpos e sincronia de quadro
+- Rosto novo, medido nas referências do cliente: olhos ovais altos e separados (antes encostavam), elipses de verdade (textura `whiteCircle.png` do Studio), pupila estreita com brilho, sobrancelhas grossas, boca escura com língua, gota de suor verde-água, olhos X de nocaute, e desenho com a luz da cena (sem a faixa amarela da pálpebra antiga).
+- Animação do rosto num controlador único por quadro: piscada que achata o olho, sobrancelhas que sobem na ênfase da fala, boca em 4 aberturas firmes; antes os tweens de piscar e de expressão brigavam e podiam travar o olho.
+- Sincronia: o gravador agora carimba cada quadro na hora da captura (o vídeo saía ~0,14 s adiantado: boca abrindo antes da voz, efeitos atrasados) e marcas de sincronia na faixa cortada do viewport medem e corrigem o atraso do Roblox. Cortes a ±2 quadros do planejado.
+- Cortes sem bug: `K.cortarPara` (nada do noob na pose antiga por um quadro no lugar novo), descida já inclinada no primeiro quadro, pouso em `idle` (sem pose T) com o corte dentro do pouso, movimentos encadeados terminando nos tempos da timeline, sem flash branco nos cortes.
+- Fundo desfocado nos closes (`K.foco`), plano de baixo para cima no escorregador gigante, cena de teste do rosto em `modelos/teste-rosto.lua`.
+
 ## v1.6.0 — legendas sem bugs, som de escorregador e rosto fora da legenda
 - Legendas karaokê corrigidas: nunca duas ao mesmo tempo (cada evento com posição fixa e sem sobreposição), palavras curtas acendem junto com a vizinha (nada de destaque piscando), pausas sem destaque, fade curto na saída, tamanho medido na referência.
 - Novo `roblox-video-editor/scripts/revisar_legendas.py`: renderiza só as legendas e aponta sobreposição, destaque piscando, legenda em duas linhas, texto cortado e legenda junto com sticker/selo. Obrigatório antes da versão final.
