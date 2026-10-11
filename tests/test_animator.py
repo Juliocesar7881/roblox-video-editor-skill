@@ -19,6 +19,11 @@ def ffmpeg_or_none():
         return None
 
 
+def tem_numpy():
+    import importlib.util
+    return importlib.util.find_spec('numpy') is not None
+
+
 class Animator(unittest.TestCase):
     def test_words_from_alignment(self):
         text = 'Ué, travei?'
@@ -226,6 +231,7 @@ class Animator(unittest.TestCase):
             self.assertAlmostEqual(xs.mean() / 1080, fx, delta=.01)
             self.assertAlmostEqual(ys.mean() / 1920, fy, delta=.01)
 
+    @unittest.skipIf(not tem_numpy(), 'numpy indisponivel')
     def test_recorder_timestamps_frames_at_capture(self):
         # O escritor reamostra pelo tempo de CAPTURA: quadros que faltam viram repeticao e a saida tem
         # um quadro por 1/fps desde o flash (antes o FFmpeg carimbava na leitura e o video adiantava).
