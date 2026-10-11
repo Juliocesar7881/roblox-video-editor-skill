@@ -5,8 +5,9 @@ from media_utils import probe, run, filter_path
 
 # ASS colours are &HAABBGGRR.
 COLORS = {'branco': '&H00FFFFFF', 'amarelo': '&H0000E6FF', 'vermelho': '&H003C3CFF', 'verde': '&H005AE63C',
-          'azul': '&H00FFAA3C', 'rosa': '&H00C85AFF', 'laranja': '&H00008CFF', 'roxo': '&H00FF5AA0'}
-CAPTION_STYLES = ('fala', 'legenda', 'grito', 'titulo')
+          'azul': '&H00FFAA3C', 'rosa': '&H00C85AFF', 'laranja': '&H00008CFF', 'roxo': '&H00FF5AA0', 'ouro': '&H0050E2FF'}
+CAPTION_STYLES = ('fala', 'legenda', 'karaoke', 'grito', 'titulo')
+FONTES = Path(__file__).resolve().parents[1] / 'assets' / 'fontes'
 EFFECT_TYPES = ('punch', 'zoom', 'shake', 'flash')
 FLASH_COLORS = {'branco': 'white', 'amarelo': 'yellow', 'vermelho': 'red', 'preto': 'black'}
 
@@ -63,6 +64,7 @@ WrapStyle: 0
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
 Style: fala,Arial,{fs},&H00FFFFFF,&H000000FF,&H00101010,&H60000000,-1,0,0,0,100,100,0,0,1,{max(3,round(fs*.06))},1,2,{int(w*.12)},{int(w*.16)},{int(h*.23)},1
 Style: legenda,Arial Black,{round(fs*1.5)},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(fs*.11))},{max(2,round(fs*.05))},2,{int(w*.07)},{int(w*.07)},{int(h*.3)},1
+Style: karaoke,Fredoka One,{round(w*.095 if h > w else h*.086)},&H00FFFFFF,&H000000FF,&H00301A12,&H00301A12,0,0,0,0,86,108,-2,0,1,{max(4,round((w*.095 if h > w else h*.086)*.11))},{max(2,round((w*.095 if h > w else h*.086)*.08))},2,{int(w*.05)},{int(w*.05)},{int(h*.285)},1
 Style: grito,Arial Black,{big},{COLORS['amarelo']},&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(5,round(big*.09))},{max(2,round(big*.05))},5,{int(w*.06)},{int(w*.06)},0,1
 Style: titulo,Arial Black,{top},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(top*.08))},{max(2,round(top*.04))},8,{int(w*.08)},{int(w*.08)},{int(h*.1)},1
 Style: Preview,Arial,{int(fs*.5)},&H0060FFFF,&H000000FF,&H00101010,&H60000000,0,0,0,0,100,100,0,0,1,2,0,8,10,10,10,1
@@ -85,7 +87,11 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
         highlight = c.get('highlight', 'verde' if style == 'grito' else 'amarelo')
         if highlight not in COLORS:
             raise ValueError(f'caption.highlight deve ser um de {sorted(COLORS)}')
-        if style == 'legenda':
+        if style == 'karaoke':
+            # Reference style: the group stays, the spoken word turns yellow; the group fades in once.
+            animation = (r'{ad(90,0)scx92scy92	(0,90,scx100scy100)' if c.get('entrada') else '{') + tag + '}'
+            highlight = c.get('highlight', 'ouro')
+        elif style == 'legenda':
             # Word-by-word captions: quick pop and no fade, so consecutive words feel snappy.
             animation = r'{\fscx80\fscy80\t(0,80,\fscx106\fscy106)\t(80,140,\fscx100\fscy100)' + tag + '}'
         elif style == 'fala':
@@ -95,7 +101,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
             tilt = (3 if i % 2 else -3) if style == 'grito' else 0
             animation = (r'{\fad(0,120)\fscx15\fscy15\frz' + str(tilt) +
                          r'\t(0,110,\fscx128\fscy128)\t(110,210,\fscx100\fscy100)' + tag + '}')
-        layer = 0 if style in ('fala', 'legenda') else 1
+        layer = 0 if style in ('fala', 'legenda', 'karaoke') else 1
         lines.append(f'Dialogue: {layer},{ass_time(start)},{ass_time(end)},{style},,0,0,0,,{animation}{clean_text(c["text"], COLORS[highlight], base)}')
     if preview:
         lines.append(f'Dialogue: 2,0:00:00.00,{ass_time(total)},Preview,,0,0,0,,PREVIA - LICENCAS PENDENTES')
@@ -416,7 +422,7 @@ def main():
                 yexpr = f'{y}+12*sin(6*(t-{at}))' if overlay.get('bob',True) else str(y)
                 video_graph += [f"[v{k}][o{k}]overlay=x={x}:y='{yexpr}':enable='between(t,{at},{at+length})':eof_action=pass[v{k+1}]"]
             # Captions go last so stickers and camera moves never cover or shake the text.
-            video_graph += [f"[v{len(overlays)}]ass=filename='{filter_path(ass)}'[vout]"]
+            video_graph += [f"[v{len(overlays)}]ass=filename='{filter_path(ass)}':fontsdir='{filter_path(FONTES)}'[vout]"]
             final_graph = tmp / 'video-graph.txt'; final_graph.write_text(';\n'.join(video_graph), encoding='utf-8')
             run([*final_inputs, '-filter_complex_script',final_graph,'-map','[vout]','-map','1:a:0',
                  '-af', norm,

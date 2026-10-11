@@ -13,3 +13,6 @@ Os seis SFX em `assets/audio-original` foram sintetizados matematicamente para e
 Os **77 efeitos do CapCut** em `efeitos/capcut-convertidos` foram declarados livres de direitos autorais pelo proprietário do repositório (Juliocesar7881) em 7 de outubro de 2026 e estão marcados como `user-declared-royalty-free`, com uso comercial habilitado na skill. A declaração é do proprietário; quem redistribuir ou usar esses arquivos deve considerar a origem de cada som.
 
 Os 16 efeitos fornecidos em `efeitos/fornecidos` e as 11 músicas fornecidas com suas 11 versões curtas estão incluídos por solicitação expressa do usuário. Esses **38 arquivos** permanecem com `license_status: unverified` e `commercial_allowed: false`: não foi comprovada sua licença comercial ou de redistribuição. Não se atribui a esses arquivos licença MIT ou CC BY. Sua inclusão não concede direitos autorais nem garante uso monetizado; considere os direitos de cada gravação antes de usar ou redistribuir.
+
+
+A fonte **Fredoka One** (`roblox-video-editor/assets/fontes/FredokaOne-Regular.ttf`, de Milena Brandão) é distribuída sob a SIL Open Font License 1.1, que permite uso comercial e redistribuição junto de software.

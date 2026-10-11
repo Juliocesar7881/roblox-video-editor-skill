@@ -31,6 +31,7 @@ def palavra(fala, alvo):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--estimado', action='store_true')
+    ap.add_argument('--sem-auditoria', action='store_true', help='gravacao final: sem o custo da auditoria')
     a = ap.parse_args()
     roteiro = json.loads((HERE / 'roteiro.json').read_text(encoding='utf-8'))
     falas = estimar(roteiro) if a.estimado else json.loads((HERE / 'falas' / 'falas.json').read_text(encoding='utf-8'))
@@ -90,10 +91,10 @@ def main():
 		K.olhar(noob, -0.6, 0)
 		K.anim(noob, "apontar", {loop = false})
 		cam.rosto(noob, 4.4, 38, {lado = 1.2, altura = -0.4})''')
-    E(corrida, '''		K.mover(noob, V(-21, 3, -6), 1.1, "correr")
+    E(corrida, '''		K.mover(noob, V(-18.5, 0, -9.5), 1.1, "correr")
 		cam.seguir(raiz, V(7, 2.5, -8), 1.3)''')
     # No topo do vermelho: desce devagar ate travar.
-    E(topo_vermelho, '''		raiz.CFrame = CFrame.lookAt(e1[1], e1[1] + V(0, 0, -1))
+    E(topo_vermelho, '''		K.sentarEm(noob, e1[1], V(0, 0, -1))
 		K.rosto(noob, "feliz")
 		K.deslizar(noob, meio1, 2.0)
 		cam.seguir(raiz, V(8, 2.2, -5), 2.3)''')
@@ -108,8 +109,7 @@ def main():
 		K.olhar(noob, 0.3, -1)
 		cam.corte(V(21, 2.4, -25), V(24.5, 9, 6), 60)
 		cam.mover(V(21.2, 2.2, -24.2), V(24.5, 12, 6), 1.6, 58)''')
-    E(topo_amarelo, '''		raiz.CFrame = CFrame.lookAt(e3[1], e3[1] + V(0, 0, -1))
-		K.anim(noob, "sentar")
+    E(topo_amarelo, '''		K.sentarEm(noob, e3[1], V(0, 0, -1))
 		K.rosto(noob, "medo")
 		K.olhar(noob, 0, 1)
 		cam.corte(e3[1] + V(2.5, 5.5, 7), e3[1] + V(0, -26, -42), 62)''')
@@ -117,18 +117,20 @@ def main():
 		K.olhar(noob, 0, 0)
 		cam.rosto(noob, 4.4, 40, {lado = 1.3, altura = 0.1})''')
     # Descida rapida, grito e voo com cambalhotas.
-    E(descida, '''		K.deslizar(noob, e3, 2.2)
-		cam.seguir(raiz, V(9, 3.5, -8), 2.25)''')
-    E(ini['08'] - 0.1, '		K.rosto(noob, "grito")\n		K.olhar(noob, 0, 0)')
-    E(voo, '''		local pouso = K.deitado(V(24, 0, -60), V(0, 0, 1))
-		K.voar(noob, pouso.Position, 11, 1.6, 2, "cair", function()
-			for _, tr in ipairs(noob.Humanoid.Animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
-			raiz.CFrame = pouso
-			K.poeira(V(24, K.chao(V(24, 0, -60)) + 0.3, -60), 30)
-			K.rosto(noob, "apertado", 0.05)
-			cam.tremor(0.8, 0.5)
+    # O voo comeca exatamente quando a descida termina (callback), sem duas animacoes brigando.
+    E(descida, '''		local pouso = K.deitado(V(24, 0, -60), V(0, 0, 1))
+		K.deslizar(noob, e3, 2.2, nil, function()
+			K.voar(noob, pouso, 11, 1.6, 2, "cair", function()
+				for _, tr in ipairs(noob.Humanoid.Animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
+				raiz.CFrame = pouso
+				K.poeira(V(24, K.chao(V(24, 0, -60)) + 0.3, -60), 30)
+				K.rosto(noob, "apertado", 0.05)
+				cam.tremor(0.8, 0.5)
+			end)
+			cam.seguir(raiz, V(9.5, 2.5, 3.5), 1.6)
 		end)
-		cam.seguir(raiz, V(9.5, 2.5, 3.5), 1.6)''')
+		cam.seguir(raiz, V(9, 3.5, -8), 2.6)''')
+    E(ini['08'] - 0.1, '		K.rosto(noob, "grito")\n		K.olhar(noob, 0, 0)')
     E(pouso + 0.05, '		cam.corte(V(33, 3, -50), V(24, 1.2, -60), 58)')
     E(pouso + 0.6, '''		K.rosto(noob, "tonto")
 		local c = noob.Head.Position
@@ -149,8 +151,10 @@ local inicio = raiz.CFrame
 local meio1 = {{}}
 for i = 1, 5 do meio1[i] = e1[i] end
 K.piscar(noob)
-
-K.rodar({{
+K.preCarregar(noob)
+K.anim(noob, "idle", {{fade = 0}})
+''' + ('' if a.sem_auditoria else 'K.AUDITORIA_DETALHE = true\nK.auditar(noob)\n') + '''
+K.rodar({''' + '''
 ''' + '\n'.join(ev) + f'''
 }}, {fim})
 '''

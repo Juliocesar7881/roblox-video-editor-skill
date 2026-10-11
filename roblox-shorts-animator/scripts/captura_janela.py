@@ -129,12 +129,16 @@ class Gravador:
         return meta
 
 
-def processar(viewport_mp4, saida, atraso, duracao, largura=1080, fps=60, deitada=True):
-    """viewport (camera deitada) -> clipe vertical 9:16 a partir do t=0 da timeline."""
+def processar(viewport_mp4, saida, atraso, duracao, largura=1080, fps=60, deitada=True, margem_topo=0.075):
+    """viewport (camera deitada) -> clipe vertical 9:16 a partir do t=0 da timeline.
+    margem_topo: faixa de cima do viewport com os botoes do Roblox (logo e menu), que nao podem ser
+    escondidos no jogo; e cortada antes de virar o video."""
     from media_utils import probe
     info = probe(viewport_mp4)
     w, h = info['width'], info['height']
-    vf = []
+    corte = int(h * margem_topo) // 2 * 2
+    vf = [f'crop={w}:{h - corte}:0:{corte}'] if corte else []
+    h -= corte
     if deitada:
         vf.append('transpose=2')
         w, h = h, w

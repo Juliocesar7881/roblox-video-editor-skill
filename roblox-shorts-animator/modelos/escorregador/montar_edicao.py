@@ -9,7 +9,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SKILLS = Path.home() / '.claude' / 'skills'
 sys.path.insert(0, str(SKILLS / 'roblox-shorts-animator' / 'scripts'))
-from legendas import legendas_falas  # noqa: E402
+from legendas import legendas_karaoke  # noqa: E402
 sys.path.insert(0, str(HERE))
 from gerar_cena import estimar  # noqa: E402
 
@@ -62,7 +62,7 @@ def main():
     ini = T['falas']
     fim = T['fim']
 
-    captions = legendas_falas(falas, ini, roteiro.get('destaques', []))
+    captions = legendas_karaoke(falas, ini)
     voice = [] if a.estimado else [{'file': f'falas/{F[i]["arquivo"]}', 'at': round(ini[i], 3), 'gain_db': 0} for i in ini]
     S, E, O = [], [], []
 

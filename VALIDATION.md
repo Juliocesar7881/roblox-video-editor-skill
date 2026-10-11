@@ -1,5 +1,12 @@
 # Validação antes da publicação
 
+## v1.4.0 — auditoria de animação e legendas karaokê (11 de outubro de 2026)
+
+- 20 testes passaram (`python -m unittest discover -s tests`), incluindo agrupamento karaokê idêntico à referência ("MANO, OLHA O" / "TAMANHO DESSE OVO!"), fonte Fredoka One embutida e as APIs de auditoria do AnimKit.
+- Piloto refeito: a auditoria encontrou 27 contatos do corpo com chão/rampas (causa principal: rig com a cabeça como PrimaryPart, deixando o corpo 1,5 stud enterrado); após as correções, `[auditoria] total 0 problema(s)` em todo o vídeo.
+- Gravação final sem cursor do mouse e sem os botões do Roblox (faixa cortada); legendas comparadas lado a lado com o Short de referência.
+
+
 ## v1.3.0 — Shorts animados (11 de outubro de 2026)
 
 - `python -m unittest discover -s tests`: 17 testes passaram (pipeline do Studio, AnimKit, legendas, alinhamento de voz, processamento da captura, render com voz e modo shorts).

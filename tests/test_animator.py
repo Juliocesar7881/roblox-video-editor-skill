@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ANIM = ROOT / 'roblox-shorts-animator'
 sys.path.insert(0, str(ANIM / 'scripts'))
 sys.path.insert(0, str(ROOT / 'roblox-video-editor' / 'scripts'))
-from legendas import legendas_falas
+from legendas import legendas_falas, legendas_karaoke
 from tts_elevenlabs import words_from_alignment
 import studio_runscript
 
@@ -76,6 +76,33 @@ class Animator(unittest.TestCase):
             self.assertEqual((info['width'], info['height']), (1080, 1920))
             self.assertAlmostEqual(info['duration'], 1.5, delta=.1)
             self.assertAlmostEqual(info['fps'], 60, delta=.5)
+
+    def test_karaoke_groups_like_reference(self):
+        f = [{'id': '01', 'palavras': [{'w': w, 'start': i * .35, 'end': i * .35 + .3}
+                                       for i, w in enumerate('Mano, olha o tamanho desse ovo!'.split())]}]
+        caps = legendas_karaoke(f, {'01': 1.0})
+        self.assertEqual([c['text'] for c in caps[:4]],
+                         ['*MANO,* OLHA O', 'MANO, *OLHA* O', 'MANO, OLHA *O*', '*TAMANHO* DESSE OVO!'])
+        self.assertEqual([bool(c.get('entrada')) for c in caps], [True, False, False, True, False, False])
+        self.assertTrue(all(c['style'] == 'karaoke' for c in caps))
+        self.assertTrue(all(a['end'] <= b['start'] + 1e-6 for a, b in zip(caps, caps[1:])))
+
+    def test_karaoke_style_uses_bundled_font(self):
+        from renderizar import make_ass, FONTES
+        self.assertTrue((FONTES / 'FredokaOne-Regular.ttf').is_file())
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / 'k.ass'
+            make_ass(p, [{'start': 0, 'end': 1, 'text': 'TAMANHO *DESSE* OVO!', 'style': 'karaoke', 'entrada': True}], 1080, 1920, 2, False)
+            t = p.read_text(encoding='utf-8-sig')
+            self.assertIn('Style: karaoke,Fredoka One', t)
+            self.assertIn('&H0050E2FF&}DESSE', t)
+            self.assertIn('\fad(90,0)', t)
+
+    def test_animkit_audits_and_hides_cursor(self):
+        kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
+        for api in ('function AnimKit.auditar', 'GetPartsInPart', 'MouseIconEnabled = false',
+                    'model.PrimaryPart = model.HumanoidRootPart', 'function AnimKit.preCarregar', 'function AnimKit.sentarEm'):
+            self.assertIn(api, kit)
 
 
 if __name__ == '__main__':

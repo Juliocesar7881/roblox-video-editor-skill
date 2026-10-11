@@ -13,8 +13,9 @@ local Players = game:GetService("Players")
 
 AnimKit.VERTICAL = true
 AnimKit.ALTURA_RAIZ = 3 -- R6 em pe: centro do HumanoidRootPart acima da sola dos pes
-AnimKit.ALTURA_SENTADO = 1.55 -- R6 sentado: centro do HumanoidRootPart acima do assento
-AnimKit.ALTURA_DEITADO = 0.55 -- R6 deitado de costas: centro do tronco acima do chao
+AnimKit.ALTURA_SENTADO = 1.9 -- R6 sentado: centro do HumanoidRootPart acima do assento (pernas da pose sentar descem um pouco)
+AnimKit.ELEVACAO_PASSO = 0.2 -- andar/correr: o pe da animacao R6 desce ate 0.26 abaixo do nivel parado
+AnimKit.ALTURA_DEITADO = 0.8 -- R6 deitado de costas: centro do tronco acima do chao (a cabeca grande e mais funda que o tronco)
 AnimKit.ATRASO = 0.8 -- segundos entre o flash magenta e o t=0 da timeline
 AnimKit.FOV = 50 -- campo de visao HORIZONTAL do video vertical final, em graus
 
@@ -267,6 +268,10 @@ function AnimKit.criarNoob(nome, cf, cores)
 		-- A cabeca maior sobe junto, apoiada nos ombros.
 		neck.C1 = CFrame.new(0, -0.5 * k, 0) * (neck.C1 - neck.C1.Position)
 	end
+	-- O Roblox cria o rig com a CABECA como PrimaryPart: sem isto, PivotTo poe a cabeca no ponto
+	-- pedido e o corpo fica 1,5 stud enterrado no chao.
+	model.PrimaryPart = model.HumanoidRootPart
+	model.WorldPivot = model.HumanoidRootPart.CFrame
 	model:PivotTo(cf)
 	rostoGui(model)
 	model.Parent = workspace
@@ -275,6 +280,14 @@ end
 
 -- Escorregador: escada + rampa inclinada (ou curva) + bordas. Devolve os pontos do caminho de descida.
 -- opts: topo (Vector3 do topo), dir (Vector3 horizontal), comprimento, queda, cor, corBorda, largura, segmentos, curva (graus totais)
+-- Normal "para cima" de uma superficie que desce na direcao d (perpendicular a d, sem inclinar para o lado).
+local function normalDe(d)
+	local lado = d:Cross(Vector3.yAxis)
+	if lado.Magnitude < 1e-3 then return Vector3.yAxis end
+	return lado.Unit:Cross(d).Unit
+end
+AnimKit.normalDe = normalDe
+
 function AnimKit.escorregador(nome, opts)
 	local pasta = Instance.new("Model")
 	pasta.Name = nome
@@ -284,8 +297,8 @@ function AnimKit.escorregador(nome, opts)
 	local dir = (opts.dir or Vector3.new(0, 0, -1)).Unit
 	local curva = math.rad(opts.curva or 0)
 	local topo = opts.topo
-	-- Pontos de assento: superficie (meia espessura 0.3) + altura do noob sentado, na normal da rampa.
-	local pontos = { topo + Vector3.new(0, 0.3 + AnimKit.ALTURA_SENTADO, 0) }
+	-- Juntas da linha central e direcoes dos trechos; os assentos sao calculados no fim.
+	local juntas, dirs = { topo }, {}
 	local pos = topo
 	local passoH = opts.comprimento / segs
 	local passoV = opts.queda / segs
@@ -301,8 +314,38 @@ function AnimKit.escorregador(nome, opts)
 			AnimKit.bloco({ Name = "Borda", Parent = pasta, Size = Vector3.new(0.5, 1.6, (b - a).Magnitude + 0.15),
 				CFrame = cf * CFrame.new(s * (largura / 2 + 0.25), 0.7, 0), Color = opts.corBorda or Color3.new(1, 1, 1) })
 		end
-		pontos[#pontos + 1] = b + cf.UpVector * (0.3 + AnimKit.ALTURA_SENTADO)
+		juntas[#juntas + 1] = b
+		dirs[#dirs + 1] = (b - a).Unit
 		pos = b
+	end
+	-- Saida plana no pe do escorregador: as pernas esticadas nao batem no chao no fim da descida.
+	local saida = opts.saida or 5
+	if saida > 0 then
+		local d = CFrame.Angles(0, curva, 0):VectorToWorldSpace(dir)
+		local b = pos + d * saida
+		local cf = CFrame.lookAt((pos + b) / 2, b)
+		AnimKit.bloco({ Name = "Saida", Parent = pasta, Size = Vector3.new(largura, 0.6, saida + 0.15), CFrame = cf,
+			Color = opts.cor, Material = Enum.Material.SmoothPlastic })
+		for _, sl in ipairs({ -1, 1 }) do
+			AnimKit.bloco({ Name = "Borda", Parent = pasta, Size = Vector3.new(0.5, 1.6, saida + 0.15),
+				CFrame = cf * CFrame.new(sl * (largura / 2 + 0.25), 0.7, 0), Color = opts.corBorda or Color3.new(1, 1, 1) })
+		end
+		juntas[#juntas + 1] = b
+		dirs[#dirs + 1] = d
+	end
+	-- Assento em cada junta: na normal da bissetriz entre o trecho que chega e o que sai, assim as
+	-- pernas nunca entram na rampa nas dobras (topo -> rampa, rampa -> saida plana).
+	local pontos = {}
+	for i, j in ipairs(juntas) do
+		local dentro = dirs[i - 1] or (dirs[1] * Vector3.new(1, 0, 1)).Unit
+		local fora = dirs[i] or dentro
+		-- Nas dobras a ponta das pernas (2 studs a frente) desce ~2*sen(angulo/2): folga extra ali.
+		local extra = 0
+		if i > 1 then
+			local ang = math.acos(math.clamp(dentro:Dot(fora), -1, 1))
+			extra = 1.3 * math.sin(ang / 2)
+		end
+		pontos[i] = j + normalDe((dentro + fora).Unit) * (0.3 + AnimKit.ALTURA_SENTADO + extra)
 	end
 	-- Plataforma e escada no topo.
 	-- Plataforma do topo: o assento do primeiro ponto fica sobre ela (topo da plataforma = topo.Y + 0.3).
@@ -487,10 +530,19 @@ function AnimKit.mover(noob, destino, t, animNome)
 		local dir = (destino - r.Position) * Vector3.new(1, 0, 1)
 		destino = AnimKit.emPe(destino, destino + (dir.Magnitude > 0.01 and dir or r.CFrame.LookVector))
 	end
-	if animNome ~= false then AnimKit.anim(noob, animNome or "andar") end
-	local tw = tween(r, t, { CFrame = destino }, Enum.EasingStyle.Linear)
+	local passo = animNome == nil or animNome == "andar" or animNome == "correr"
+	local sobe = passo and AnimKit.ELEVACAO_PASSO or 0
+	if animNome ~= false then AnimKit.anim(noob, animNome or "andar", { fade = 0.08 }) end
+	-- O ciclo de passada desce o pe abaixo do nivel parado: o corpo sobe um pouco enquanto anda.
+	r.CFrame = r.CFrame + Vector3.new(0, sobe, 0)
+	local tw = tween(r, t, { CFrame = destino + Vector3.new(0, sobe, 0) }, Enum.EasingStyle.Linear)
 	if animNome ~= false then
-		tw.Completed:Connect(function() AnimKit.anim(noob, "idle") end)
+		tw.Completed:Connect(function()
+			-- Primeiro a perna sai da passada (pose aplicada no proximo quadro), depois o corpo desce.
+			AnimKit.anim(noob, "idle", { fade = 0 })
+			RunService.Heartbeat:Wait()
+			r.CFrame = r.CFrame - Vector3.new(0, sobe, 0)
+		end)
 	end
 	return tw
 end
@@ -500,17 +552,19 @@ function AnimKit.deslizar(noob, pontos, t, anim, aoTerminar)
 	local r = raiz(noob)
 	local total = 0
 	for i = 2, #pontos do total += (pontos[i] - pontos[i - 1]).Magnitude end
-	AnimKit.anim(noob, anim or "sentar")
+	AnimKit.anim(noob, anim or "sentar", { fade = 0 })
 	task.spawn(function()
+		-- Orientacao em cada ponto = bissetriz dos trechos vizinhos: o corpo ja chega inclinado certo
+		-- em cada dobra e as pernas acompanham a superficie.
+		local function cfPonto(i)
+			local dentro = i > 1 and (pontos[i] - pontos[i - 1]).Unit or nil
+			local fora = i < #pontos and (pontos[i + 1] - pontos[i]).Unit or nil
+			local d = ((dentro or fora) + (fora or dentro)).Unit
+			return CFrame.lookAt(pontos[i], pontos[i] + d, normalDe(d))
+		end
 		for i = 2, #pontos do
-			local delta = pontos[i] - pontos[i - 1]
-			local seg = delta.Magnitude
-			local frente = delta.Unit
-			-- Normal da rampa: o noob senta inclinado junto com a descida, sem afundar nem flutuar.
-			local lado = frente:Cross(Vector3.yAxis)
-			local cima = lado.Magnitude > 0.01 and lado.Unit:Cross(frente) or Vector3.yAxis
-			local cf = CFrame.lookAt(pontos[i], pontos[i] + frente, cima)
-			local tw = tween(r, t * seg / total, { CFrame = cf }, Enum.EasingStyle.Linear)
+			local seg = (pontos[i] - pontos[i - 1]).Magnitude
+			local tw = tween(r, t * seg / total, { CFrame = cfPonto(i) }, Enum.EasingStyle.Linear)
 			tw.Completed:Wait()
 		end
 		if aoTerminar then aoTerminar() end
@@ -518,17 +572,67 @@ function AnimKit.deslizar(noob, pontos, t, anim, aoTerminar)
 end
 
 -- Voo em arco (parabola) ate destino, com giro opcional (voltas).
+-- Senta o noob num ponto de assento (ex.: K.caminho(escorregador)[1]) olhando para 'frente'.
+-- A pose sentada entra sem mistura: as pernas esticadas nunca aparecem atravessando o assento.
+function AnimKit.sentarEm(noob, ponto, frente)
+	AnimKit.anim(noob, "sentar", { fade = 0 })
+	-- A pose so e aplicada no proximo quadro: espera um quadro antes de mover o corpo para o assento.
+	RunService.Heartbeat:Wait()
+	raiz(noob).CFrame = CFrame.lookAt(ponto, ponto + (frente or Vector3.new(0, 0, -1)))
+end
+
+-- Carrega todas as animacoes antes da cena: na primeira vez que uma animacao toca ela ainda esta
+-- baixando e o boneco fica alguns quadros na pose errada (pernas atravessando rampas, por exemplo).
+function AnimKit.preCarregar(noob, nomes)
+	local animator = noob:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
+	local lista = {}
+	for _, nome in ipairs(nomes or { "idle", "andar", "correr", "sentar", "cair", "apontar", "acenar", "comemorar", "rir" }) do
+		local a = Instance.new("Animation")
+		a.AnimationId = "rbxassetid://" .. tostring(AnimKit.ANIM[nome] or nome)
+		lista[#lista + 1] = a
+	end
+	pcall(function() game:GetService("ContentProvider"):PreloadAsync(lista) end)
+	for i, a in ipairs(lista) do
+		local tr = animator:LoadAnimation(a)
+		tr:Play(0, 0.001)
+		task.wait()
+		tr:Stop(0)
+	end
+end
+
+-- destino: Vector3 ou CFrame. Com CFrame (ex.: K.deitado), as cambalhotas acabam aos 75% do voo e o
+-- corpo gira suavemente ate a pose final: nunca chega em pe no chao (o que enfiaria as pernas na terra).
 function AnimKit.voar(noob, destino, altura, t, voltas, anim, aoPousar)
 	local r = raiz(noob)
 	local a = r.Position
 	local orient = r.CFrame - r.Position
-	AnimKit.anim(noob, anim or "cair")
+	local final = typeof(destino) == "CFrame" and (destino - destino.Position) or nil
+	local alvo = typeof(destino) == "CFrame" and destino.Position or destino
+	-- A pose de queda (pernas esticadas) so entra depois que ele ja subiu: saindo sentado de uma
+	-- rampa, trocar a pose no chao enfiaria as pernas na saida.
+	local trocou = false
 	local t0 = os.clock()
 	local con
 	con = RunService.RenderStepped:Connect(function()
 		local k = math.clamp((os.clock() - t0) / t, 0, 1)
-		local p = a:Lerp(destino, k) + Vector3.new(0, 4 * altura * k * (1 - k), 0)
-		r.CFrame = CFrame.new(p) * orient * CFrame.Angles(math.pi * 2 * (voltas or 0) * k, 0, 0)
+		if not trocou and k >= 0.15 then
+			trocou = true
+			AnimKit.anim(noob, anim or "cair", { fade = 0.1 })
+		end
+		local p = a:Lerp(alvo, k) + Vector3.new(0, 4 * altura * k * (1 - k), 0)
+		local rot
+		if final then
+			-- Cambalhotas so depois de ganhar altura (de 15% a 75% do voo).
+			local giro = math.clamp((k - 0.15) / 0.6, 0, 1)
+			rot = orient * CFrame.Angles(math.pi * 2 * (voltas or 0) * giro, 0, 0)
+			if k > 0.75 then
+				local e = TweenService:GetValue((k - 0.75) / 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				rot = rot:Lerp(final, e)
+			end
+		else
+			rot = orient * CFrame.Angles(math.pi * 2 * (voltas or 0) * k, 0, 0)
+		end
+		r.CFrame = CFrame.new(p) * rot
 		if k >= 1 then
 			con:Disconnect()
 			if aoPousar then aoPousar() end
@@ -715,6 +819,8 @@ local function flash(t)
 end
 
 local function esconderInterface()
+	-- O cursor do mouse e desenhado dentro do viewport e apareceria na gravacao.
+	pcall(function() game:GetService("UserInputService").MouseIconEnabled = false end)
 	local SG = game:GetService("StarterGui")
 	pcall(function() SG:SetCoreGuiEnabled(Enum.CoreGuiType.All, false) end)
 	for _ = 1, 20 do
@@ -737,6 +843,7 @@ function AnimKit.rodar(eventos, duracao)
 	flash(0.3)
 	task.wait(AnimKit.ATRASO)
 	local t0 = os.clock()
+	AnimKit._t0 = t0
 	local i = 1
 	while eventos[i] and eventos[i].t <= 0 do i += 1 end
 	local con
@@ -749,9 +856,94 @@ function AnimKit.rodar(eventos, duracao)
 		if agora >= duracao then
 			con:Disconnect()
 			flash(0.3)
+			if AnimKit._relatorio then AnimKit._relatorio() end
 			task.delay(0.8, AnimKit.encerrar)
 		end
 	end)
+end
+
+-- Tempo da timeline em segundos (-1 antes do inicio).
+function AnimKit.tempo()
+	return AnimKit._t0 and (os.clock() - AnimKit._t0) or -1
+end
+
+-- Auditoria automatica: 20 vezes por segundo verifica, com a geometria exata, se alguma parte do
+-- corpo (encolhida 0.12 stud de cada lado, para tolerar o contato) entra no chao ou em qualquer
+-- objeto solido. No fim imprime "[auditoria]" com cada intervalo de tempo e o objeto atravessado;
+-- o pipeline le essas linhas e a cena deve ser corrigida ate nao sobrar nenhuma.
+function AnimKit.auditar(noob, folga)
+	folga = folga or 0.12
+	local pasta = Instance.new("Folder")
+	pasta.Name = "AuditoriaSondas"
+	pasta.Parent = workspace
+	local sondas = {}
+	for _, parte in ipairs(noob:GetDescendants()) do
+		if parte:IsA("BasePart") and parte.Name ~= "HumanoidRootPart" and parte.Name ~= "RostoPlaca" then
+			local s = Instance.new("Part")
+			s.Anchored = true
+			s.CanCollide = false
+			s.CanQuery = false
+			s.CanTouch = false
+			s.Transparency = 1
+			s.Parent = pasta
+			sondas[#sondas + 1] = { parte = parte, sonda = s }
+		end
+	end
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { noob, pasta }
+	local abertos, achados = {}, {}
+	local prox = 0
+	local con = RunService.Heartbeat:Connect(function()
+		local t = AnimKit.tempo()
+		if t < 0 or os.clock() < prox then return end
+		prox = os.clock() + 0.05
+		local agora = {}
+		for _, item in ipairs(sondas) do
+			local parte = item.parte
+			local tam = parte.Size
+			if parte.Name == "Head" then
+				local m = parte:FindFirstChildOfClass("SpecialMesh")
+				local esc = m and m.Scale.X or 1.25
+				tam = Vector3.new(1, 1, 1) * 0.95 * esc
+			end
+			item.sonda.Size = Vector3.new(math.max(0.05, tam.X - 2 * folga), math.max(0.05, tam.Y - 2 * folga), math.max(0.05, tam.Z - 2 * folga))
+			item.sonda.CFrame = parte.CFrame
+			for _, outro in ipairs(workspace:GetPartsInPart(item.sonda, params)) do
+				if outro.Transparency < 0.95 and outro.CanCollide then
+					local chave = parte.Name .. " x " .. outro:GetFullName()
+					if not agora[chave] and not abertos[chave] and AnimKit.AUDITORIA_DETALHE then
+						local r = noob.HumanoidRootPart
+						print(string.format("[auditoria-detalhe] t=%.2f %s raiz=(%.2f,%.2f,%.2f) frente=(%.2f,%.2f,%.2f) parte=(%.2f,%.2f,%.2f) cima=(%.2f,%.2f,%.2f)",
+							t, chave, r.Position.X, r.Position.Y, r.Position.Z, r.CFrame.LookVector.X, r.CFrame.LookVector.Y, r.CFrame.LookVector.Z,
+							parte.Position.X, parte.Position.Y, parte.Position.Z, parte.CFrame.UpVector.X, parte.CFrame.UpVector.Y, parte.CFrame.UpVector.Z))
+					end
+					agora[chave] = true
+				end
+			end
+		end
+		for chave in pairs(agora) do
+			if not abertos[chave] then abertos[chave] = { t, t } else abertos[chave][2] = t end
+		end
+		for chave, faixa in pairs(abertos) do
+			if not agora[chave] then
+				achados[#achados + 1] = { chave = chave, a = faixa[1], b = faixa[2] }
+				abertos[chave] = nil
+			end
+		end
+	end)
+	AnimKit._relatorio = function()
+		con:Disconnect()
+		for chave, faixa in pairs(abertos) do
+			achados[#achados + 1] = { chave = chave, a = faixa[1], b = faixa[2] }
+		end
+		table.sort(achados, function(x, y) return x.a < y.a end)
+		for _, f in ipairs(achados) do
+			print(string.format("[auditoria] %.2f-%.2fs %s", f.a, f.b, f.chave))
+		end
+		print(string.format("[auditoria] total %d problema(s)", #achados))
+		pasta:Destroy()
+	end
 end
 
 -- Ends an automated play session (gravacao): the server Script installed by the pipeline

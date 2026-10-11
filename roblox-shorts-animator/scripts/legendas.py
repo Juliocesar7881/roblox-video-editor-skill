@@ -45,6 +45,37 @@ def legendas_falas(falas, inicios, destaques=(), max_palavras=3, max_letras=16, 
     return caps
 
 
+
+def legendas_karaoke(falas, inicios, max_palavras=3, max_letras=18, folga=0.15):
+    """Estilo dos Shorts de referencia: grupos de 2-3 palavras em branco com contorno escuro, e a
+    palavra que esta sendo falada em amarelo. Uma caption por palavra (mesmo grupo, destaque muda);
+    so a primeira de cada grupo tem 'entrada' (fade/pop rapido)."""
+    caps = []
+    for f in falas:
+        base = inicios[f['id']]
+        ws = f['palavras']
+        grupos, g = [], []
+        for i, w in enumerate(ws):
+            letras = sum(len(x['w']) + 1 for x in g) + len(w['w'])
+            if g and (len(g) >= max_palavras or letras > max_letras):
+                grupos.append(g); g = []
+            g.append(w)
+            if re.search(r'[.!?]$', w['w']) and i + 1 < len(ws):
+                grupos.append(g); g = []
+        if g:
+            grupos.append(g)
+        for gi, g in enumerate(grupos):
+            fim_grupo = g[-1]['end'] + folga
+            if gi + 1 < len(grupos):
+                fim_grupo = min(fim_grupo, grupos[gi + 1][0]['start'])
+            for wi, w in enumerate(g):
+                ini = w['start']
+                fim = g[wi + 1]['start'] if wi + 1 < len(g) else fim_grupo
+                texto = ' '.join(f'*{x["w"].upper()}*' if xi == wi else x['w'].upper() for xi, x in enumerate(g))
+                caps.append({'start': round(base + ini, 3), 'end': round(base + max(fim, ini + 0.08), 3),
+                             'text': texto, 'style': 'karaoke', **({'entrada': True} if wi == 0 else {})})
+    return caps
+
 def badges():
     from PIL import Image, ImageDraw, ImageFont
     ASSETS.mkdir(parents=True, exist_ok=True)
