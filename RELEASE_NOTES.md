@@ -1,19 +1,15 @@
-Skill de edição infantil de Roblox para Claude, com instalador e **biblioteca completa de 193 áudios incluída**.
+Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
-## Novidades: edição exagerada
-- Estilo infantil exagerado como padrão, com metas mínimas de densidade (Shorts: 30+ efeitos sonoros por minuto) e receitas por momento (soco, queda, explosão, susto, falha, vitória, troca de cena).
-- Efeitos de câmera na timeline: zoom-soco (`punch`), `zoom` com pausa, tremida (`shake`) e clarão (`flash`).
-- Clipes com câmera lenta/acelerado (`speed`), congelamento (`freeze`) e rebobinar (`reverse`) para replays.
-- Legendas `grito` (gigantes, coloridas, entram pulando) e `titulo`, com 8 cores.
-- Som acoplado a legendas, efeitos e stickers; `pitch` para variar o mesmo som; volume dos efeitos compensado pelo pico de cada arquivo.
-- **83 efeitos sonoros liberados** (antes 6): 77 do CapCut, incluindo 8 novos de socos e impactos, declarados livres de direitos pelo proprietário do repositório, e 6 originais. Todos categorizados por modelo de áudio (AudioSet).
-- `scripts/selecionar_sfx.py` sugere efeitos por categoria, priorizando os menos usados.
-- 12 stickers originais novos de quadrinho: POW!, BAM!, BOOM!, TUM!, UAU!, OPS!, KKKK, ?!, estrelas de tontura, raio, suor, linhas de velocidade.
-- `relatorio-render.json` mostra efeitos por minuto, sons distintos, efeitos visuais, legendas e stickers de cada vídeo.
+## v1.3.0 — Shorts animados no Roblox Studio
+- `/roblox-shorts-animator`: da ideia ao MP4. Roteiro no formato "qual X…? escolhe rápido + reviravolta", voz Roger (ElevenLabs), cena no Studio, gravação, edição e textos de publicação.
+- Controle do Studio pela tarefa oficial `-task RunScript` (sem MCP, sem cliques); Play automático via `StudioTestService`, que encerra sozinho.
+- Gravação só da janela do Studio (Windows Graphics Capture), mesmo atrás de outras janelas; sincronia e recorte automáticos por flash magenta; câmera "deitada" para o 9:16 sair nítido em 1080×1920 a 60 fps.
+- AnimKit (Luau): noob com a skin das referências, rosto de desenho com 11 expressões, chão por raycast só em pisos marcados (os pés nunca afundam), escorregadores com assento na superfície da rampa, voo com pouso, poeira, câmera de close pela cabeça real.
+- Voz: `tts_elevenlabs.py` (chave de API com tempos por palavra) ou site do ElevenLabs + `alinhar_falas.py` (Whisper local).
+- Modelo completo do piloto "Qual escorregador é o mais rápido?" em `roblox-shorts-animator/modelos/`.
 
-## Mantido
-- Um vídeo YouTube 16:9 e pelo menos dois Shorts 9:16 por gameplay; resolução e FPS seguem a fonte.
-- 36 músicas de Kevin MacLeod (CC BY 4.0, crédito obrigatório) + 36 trechos; histórico para variar trilhas.
-- 16 memes e 11 músicas fornecidas + 11 trechos continuam só para prévia (licença não comprovada).
+## Editor de gameplay
+- Renderizador: modo `"entrega": "shorts"`, faixa de voz com a música abaixando sozinha, legendas `legenda` palavra a palavra com `*destaque*` amarelo.
+- Sticker `linhas-velocidade` desaconselhado; para velocidade, use tremida e zoom.
 
-**Download único:** `roblox-video-editor-completo.zip`. Extraia a pasta, execute `python install.py` e invoque `/roblox-video-editor` com a gameplay.
+**Download único:** `roblox-video-editor-completo.zip`. Extraia, execute `python install.py` e invoque `/roblox-video-editor` ou `/roblox-shorts-animator`.

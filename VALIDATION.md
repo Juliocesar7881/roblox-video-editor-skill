@@ -1,5 +1,13 @@
 # Validação antes da publicação
 
+## v1.3.0 — Shorts animados (11 de outubro de 2026)
+
+- `python -m unittest discover -s tests`: 17 testes passaram (pipeline do Studio, AnimKit, legendas, alinhamento de voz, processamento da captura, render com voz e modo shorts).
+- Piloto real "Qual escorregador é o mais rápido?": Roblox Studio 0.742 aberto pelo `-task RunScript`, cena de 33 s gravada só pela janela (1.894 quadros capturados, 0 descartados), vídeo final 1080×1920 a 60 fps, −14,0 LUFS, pico −1,9 dBTP.
+- Voz Roger (ElevenLabs v4) gerada pelo site com o usuário logado; as 9 falas conferidas por transcrição Whisper; o áudio final transcrito confirma a voz audível por cima da música e dos efeitos.
+- Quadros revisados a cada 0,6 s: pés sempre sobre o piso, closes com a cabeça inteira, pouso com poeira.
+
+
 ## v1.2.0 — edição exagerada (7 de outubro de 2026)
 
 Executado localmente com FFmpeg 7.1 e Python 3.12.

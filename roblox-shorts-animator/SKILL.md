@@ -1,0 +1,42 @@
+---
+name: roblox-shorts-animator
+description: "Crie Shorts animados de Roblox (9:16, ~25-35 s) a partir de uma ideia: roteiro no formato 'qual X ...? escolhe rapido 5-4-3-2-1 + reviravolta', voz do noob pelo ElevenLabs (Roger), cena montada e animada no Roblox Studio pela linha de comando oficial (sem cliques), gravacao so da janela do Studio e edicao final exagerada com legendas palavra a palavra, SFX e musica."
+---
+
+# Animador de Shorts Roblox
+
+Transforme uma ideia do usuário ("faz um de qual escorregador é o mais rápido") em um Short vertical **pronto para postar**, animado no Roblox Studio. O personagem principal é o **noob com a skin das referências do usuário**: cabeça clássica do Roblox em escala 1.45, rosto de desenho (olhos ovais grandes com contorno grosso, pupilas pretas, sobrancelhas grossas, bochechas, gota de suor), braços e cabeça amarelos, tronco azul royal e pernas verdes. A voz padrão é o **"Roger - Laid-Back, Casual, Resonant" do ElevenLabs**. Público infantil, português brasileiro. Leia [references/formato.md](references/formato.md) e [references/animkit.md](references/animkit.md) antes de começar.
+
+Depende da skill irmã `roblox-video-editor` (renderizador, biblioteca de SFX/música e stickers). O `install.py` do repositório instala as duas.
+
+## Como o Studio é controlado (sem MCP e sem cliques)
+
+O Roblox Studio tem uma tarefa oficial de linha de comando: `RobloxStudioBeta.exe -task RunScript -localPlaceFile place.rbxlx -runScriptFile script.lua -outputFile saida.log -quitAfterExecution`. O script roda no place em modo edição, com permissão de command bar: cria peças, instala scripts, e inicia o modo Play com `StudioTestService:ExecutePlayModeAsync`. Quando a cena termina, o servidor chama `EndTest` e a janela fecha sozinha. As janelas do Studio que o usuário já tem abertas não são tocadas.
+
+- `scripts/studio_runscript.py montar --kit --cenario studio/cenario.lua --cena studio/cena.lua --play --saida studio/pipeline.lua` gera o script único: instala o AnimKit, monta o cenário, instala a cena e roda o Play.
+- `scripts/studio_runscript.py rodar studio/pipeline.lua --place studio/base.rbxlx --gravar viewport.mp4` abre uma janela nova do Studio, manda-a para trás das janelas do usuário e grava **somente essa janela** (Windows Graphics Capture). O gravador começa no flash magenta que o AnimKit mostra (que também revela o recorte do viewport) e termina no flash final.
+- Nunca grave a área de trabalho inteira: o usuário pode estar usando o PC e apareceriam conversas e apps dele.
+- Limitações do RunScript: não dá para ler nem escrever `Lighting.Technology` (venha do arquivo do place: `assets/base.rbxlx` já usa Future). Espere ~4 s antes do Play; o pipeline já faz isso e tenta de novo se o Play encerrar sozinho.
+- O MCP do Studio (`studio_mcp.py`, `instalar_no_studio.py`) é opcional, para quando o usuário ligar "Enable Studio as MCP server".
+
+## Fluxo
+
+1. **Projeto**: crie `entregas/<tema>-<data>` e copie o modelo mais parecido de [modelos/](modelos/) (`escorregador/`: `roteiro.json`, `gerar_cena.py`, `montar_edicao.py`, `studio/cenario.lua`, `studio/base.rbxlx`).
+2. **Roteiro** (`roteiro.json`): falas curtas do noob com tag de emoção para o ElevenLabs (`[curioso]`, `[confuso]`, `[gritando]`...), `destaques` (palavras em amarelo) e plano por fala. Formato em formato.md. Roteiro original; nada copiado de outros criadores.
+3. **Voz do Roger**, por um destes caminhos:
+   - Chave de API em `ELEVENLABS_API_KEY` (o próprio usuário define com `setx`): `python scripts/tts_elevenlabs.py roteiro.json --out falas` já devolve os tempos de cada palavra.
+   - Sem chave, com o usuário logado no ElevenLabs no navegador embutido: em Text to Speech, escolha a voz **Roger** em "Minhas vozes" e o modelo mais novo. Para cada fala, digite `[tag] texto` no editor, gere com Ctrl+Enter, espere ~7 s e baixe a "Geração 1". O arquivo cai em `~/Downloads` como `.tmp`; copie para `falas/fala-XX.mp3`. Depois rode `python scripts/alinhar_falas.py roteiro.json falas` (Whisper local) para criar `falas.json` com os tempos e conferir se cada fala bate com o roteiro.
+   - Nunca digite senha nem chave do usuário. Peça para ele mesmo fazer login ou definir a chave. Downloads precisam de autorização dele. Uso comercial no ElevenLabs exige plano pago: avise.
+4. **Cenário** (`studio/cenario.lua`): use `K.bloco`, `K.escorregador` etc. **Marque todo chão com `K.piso(...)`** e posicione personagens com `K.emPe(pos, olharPara)`: o noob fica exatamente sobre o piso marcado, sem afundar na areia nem pisar em balões ou rampas. Crie o noob com `K.criarNoob(nome, K.emPe(...))`. Deixe o cenário colorido, com props em volta (árvores, balões, nuvens).
+5. **Cena** (`gerar_cena.py` → `studio/cena.lua`): a timeline vem dos tempos reais das falas. Cortes nas palavras-chave (ex.: câmera em cada opção no instante em que ele diz "vermelho", "azul", "amarelo"), expressões a cada mudança de emoção, `cam.rosto` para closes, `K.deslizar` nas rampas (sentado e inclinado com a rampa) e `K.voar` com callback de pouso + `K.deitado` + `K.poeira`. Ensaie com `--estimado` antes de ter a voz.
+6. **Gravar e conferir**: `montar` + `rodar --gravar`; depois `captura_janela.processar(viewport, 'cena.mp4', 0.8, fim)` gera 1080×1920 a 60 fps. Faça uma folha de quadros e confira **toda vez**: pés sobre o chão, cabeça inteira nos closes, ninguém atravessando objetos, cortes no tempo certo. Ajuste e regrave (cada ciclo leva ~1 min).
+7. **Edição** (`montar_edicao.py` → renderizador da roblox-video-editor com `"entrega": "shorts"`): voz das falas; legendas palavra a palavra (`legendas_falas`, estilo `legenda`, palavras-chave em amarelo); selos `assets/contagem-5..1.png` na contagem com clique e batimento de coração; whoosh nos cortes; "erro" e `?!` quando algo dá errado; impacto + explosão + zoom-soco + tremida + flash no tombo, com BOOM! e estrelas de tontura; vinheta de trombone no final. Música curta liberada a −24 dB por causa da voz. **Não use o sticker `linhas-velocidade`** (o usuário reprovou); para velocidade, tremida leve e zoom.
+8. **Revisão final**: renderize, meça loudness (~−14 LUFS, pico < −1.5 dBTP), transcreva o áudio final com Whisper para confirmar que a voz está clara por cima da música e dos efeitos, e confira os quadros.
+9. **Entrega**: MP4, `publicacao.txt` (título, descrição, hashtags, créditos da música usada e da voz), `roteiro.json`, `falas/`, `tempos.json`, `timeline-edicao.json`. Apague gravações intermediárias grandes que não forem mais úteis.
+
+## Regras de conteúdo
+
+- Roteiros originais; as referências do usuário valem só como formato.
+- Nada de prometer Robux grátis de verdade, links, pedidos de dados, sustos pesados, humilhação ou palavrões. Reviravoltas bobas e leves.
+- Sem personagens, logos ou músicas de terceiros. Conteúdo infantil deve ser marcado como "feito para crianças".
+- Vozes de IA e roteiros em série podem ser vistos como conteúdo repetitivo pelo YouTube: varie cenários, piadas e enquadramentos entre os vídeos.

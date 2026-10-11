@@ -12,7 +12,7 @@ Com Python 3.10+ instalado, baixe ou clone este repositório e execute:
 python install.py
 ```
 
-Isso instala a skill em `~/.claude/skills/roblox-video-editor` e suas dependências. Para instalar só em um projeto:
+Isso instala as skills em `~/.claude/skills/roblox-video-editor` e `~/.claude/skills/roblox-shorts-animator`, com as dependências. Para instalar só em um projeto:
 
 ```sh
 python install.py --project CAMINHO_DO_PROJETO
@@ -28,6 +28,18 @@ Entregue o longo e pelo menos dois Shorts, com humor infantil e música variada.
 Você não precisa escrever uma timeline nem selecionar trilhas. O instalador copia a skill **junto com todos os 193 áudios**, e o preparo reutiliza os arquivos incluídos. Não há download adicional de música quando a biblioteca está íntegra. O download inicial do repositório/pacote tem aproximadamente 320 MB. O script de preparo pode recuperar as músicas licenciadas da fonte oficial se elas estiverem ausentes; os arquivos fornecidos devem ser recuperados do pacote completo.
 
 O pacote completo é preparado para instalação em Claude Code. Em Claude web, Skills e anexos têm limites de tamanho que podem impedir importar a biblioteca completa de aproximadamente 320 MB; use um ambiente com acesso à pasta ou os arquivos necessários anexados à tarefa. O arquivo da gameplay precisa estar acessível; importar uma skill não dá acesso aos discos do seu computador. A duração/tamanho aceitos e a possibilidade de renderização dependem do ambiente e do plano. Para gameplay longa e 1440p/4K, prefira Claude Code local. Esta skill é independente da versão do modelo.
+
+## Nova skill: Shorts animados no Roblox Studio (`/roblox-shorts-animator`)
+
+Peça uma ideia ("faz um de qual escorregador é o mais rápido") e o Claude entrega um Short vertical animado, no formato "qual X…? escolhe rápido 5-4-3-2-1 + reviravolta":
+
+- roteiro original, com as falas do noob na voz **Roger do ElevenLabs** (pela chave de API do usuário ou pelo site, com o usuário logado);
+- cena montada e animada no **Roblox Studio pela linha de comando oficial** (`-task RunScript`): sem MCP e sem cliques, numa janela própria do Studio que fecha sozinha;
+- noob com a skin das referências (cabeça clássica grande, rosto de desenho com 11 expressões) que pisa sempre no chão certo;
+- gravação **somente da janela do Studio** (Windows Graphics Capture), em 1080×1920 a 60 fps;
+- edição exagerada com a skill de edição: legendas palavra a palavra, contagem, efeitos sonoros, stickers e música.
+
+Requer Windows, Roblox Studio instalado e logado, e `pip install -r requirements.txt`. `faster-whisper` é opcional, usado para alinhar falas baixadas do site do ElevenLabs. Veja `roblox-shorts-animator/SKILL.md`.
 
 ## Resolução segue a gravação
 

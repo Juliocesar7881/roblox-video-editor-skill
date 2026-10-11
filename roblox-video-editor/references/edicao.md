@@ -26,7 +26,7 @@ Os tempos de impacto vêm de quadros a 4 fps ou mais; o som precisa bater no qua
 - **Susto / surpresa / vilão aparece**: `zoom` segurando 1 s no ponto + sticker `interrogacao` + som de `vinheta` curta, `campainha` ou `grunhido` + legenda `grito` "?!" ou "O QUE É ISSO?!".
 - **Falha / erro bobo**: `erro` + sticker `erro` ou `oops` + legenda `grito` vermelha "QUASE!"/"OPS!" + `reverse` de 1 s (rebobina) e repete a cena.
 - **Vitória / recompensa / dinheiro**: `sucesso`, `ding` ou `aplausos` + `confete` ou `check` + legenda `grito` verde.
-- **Correndo / voando rápido**: `speed` 1.5–2 + sticker `linhas-velocidade` + `whoosh`.
+- **Correndo / voando rápido**: `speed` 1.5–2 + `shake` leve contínuo + `zoom` + `whoosh`. Não use o sticker `linhas-velocidade` (reprovado pelo usuário: fica artificial).
 - **Constrangimento / tensão**: sticker `suor` + `clique` ou `pop` + `zoom` lento.
 - **Troca de cena / capítulo**: `whoosh` + `flash` branco 0.1 s + legenda `titulo` ("JOGO 2") com `ding` ou `pop`.
 - **Toda legenda `grito`** ganha um `pop` ou `clique` na entrada (campo `sfx` da própria legenda).

@@ -34,7 +34,7 @@ Leia [references/timeline.md](references/timeline.md) e crie `timeline.json` com
 - **Por clipe**: corte, enquadramento/`center`, zoom progressivo, `speed` (0.25–4: câmera lenta ou acelerado), `freeze` (congela o último quadro por N s), `reverse` (rebobinar, até 3 s), mute.
 - **Efeitos de câmera na timeline** (`effects`): `punch` (zoom-soco no impacto), `zoom` (aproxima e segura na reação), `shake` (tremida) e `flash` (clarão colorido). Cada efeito pode trazer seu próprio `sfx`.
 - **Legendas** com estilos `fala` (embaixo, branca), `grito` (gigante no centro, amarela, entra pulando e inclinada) e `titulo` (topo), cores `amarelo`, `vermelho`, `verde`, `azul`, `rosa`, `laranja`, `roxo`, `branco`, e `sfx` próprio.
-- **Stickers** PNG originais em `assets/overlays/`: `pow`, `bam`, `boom`, `tum`, `wow` (UAU!), `oops` (OPS!), `kkkk`, `interrogacao` (?!), `estrelas-tontas`, `raio`, `suor`, `linhas-velocidade`, `explosao-cartoon`, `erro`, `check`, `seta`, `confete`. Cada um pode ter `sfx` próprio.
+- **Stickers** PNG originais em `assets/overlays/`: `pow`, `bam`, `boom`, `tum`, `wow` (UAU!), `oops` (OPS!), `kkkk`, `interrogacao` (?!), `estrelas-tontas`, `raio`, `suor`, `explosao-cartoon`, `erro`, `check`, `seta`, `confete`. Cada um pode ter `sfx` próprio.
 - **SFX** com `pitch` (0.5–2) para variar o mesmo som; o volume (`gain_db`) é o pico desejado do efeito, já compensado pelo pico de cada arquivo.
 
 Use música de fundo em **todos** os vídeos, trocando a trilha a cada capítulo/jogo. Use `scripts/selecionar_musicas.py --library BIBLIOTECA --format long --mood CLIMA` para variar trilhas entre exportações; prefira músicas diferentes entre o longo e os Shorts. Leia [references/audio-licencas.md](references/audio-licencas.md) antes de escolher áudio.

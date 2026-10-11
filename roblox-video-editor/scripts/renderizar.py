@@ -6,7 +6,7 @@ from media_utils import probe, run, filter_path
 # ASS colours are &HAABBGGRR.
 COLORS = {'branco': '&H00FFFFFF', 'amarelo': '&H0000E6FF', 'vermelho': '&H003C3CFF', 'verde': '&H005AE63C',
           'azul': '&H00FFAA3C', 'rosa': '&H00C85AFF', 'laranja': '&H00008CFF', 'roxo': '&H00FF5AA0'}
-CAPTION_STYLES = ('fala', 'grito', 'titulo')
+CAPTION_STYLES = ('fala', 'legenda', 'grito', 'titulo')
 EFFECT_TYPES = ('punch', 'zoom', 'shake', 'flash')
 FLASH_COLORS = {'branco': 'white', 'amarelo': 'yellow', 'vermelho': 'red', 'preto': 'black'}
 
@@ -40,10 +40,15 @@ def native_resolution(info, vertical):
     other=round(wide*9/16/2)*2
     return (other,wide) if vertical else (wide,other)
 
-def clean_text(value):
+def clean_text(value, highlight=None, base=None):
     # All text is supplied as data. Escape ASS syntax and strip control codes.
     text = str(value).replace('\\', '＼').replace('{', '(').replace('}', ')')
-    return ''.join(ch for ch in text if ord(ch) >= 32 or ch == '\n').replace('\n', r'\N')
+    text = ''.join(ch for ch in text if ord(ch) >= 32 or ch == '\n').replace('\n', r'\N')
+    if not (highlight and base):
+        return text.replace('*', '')
+    # *palavra* marks the key word of a line, as in word-by-word Shorts captions.
+    parts = text.split('*')
+    return ''.join(p if i % 2 == 0 else '{\\c' + highlight + '&}' + p + '{\\c' + base + '&}' for i, p in enumerate(parts))
 
 def make_ass(path, captions, w, h, total, preview):
     fs = round(w * .058) if h > w else round(h * .065)
@@ -57,6 +62,7 @@ WrapStyle: 0
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
 Style: fala,Arial,{fs},&H00FFFFFF,&H000000FF,&H00101010,&H60000000,-1,0,0,0,100,100,0,0,1,{max(3,round(fs*.06))},1,2,{int(w*.12)},{int(w*.16)},{int(h*.23)},1
+Style: legenda,Arial Black,{round(fs*1.5)},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(fs*.11))},{max(2,round(fs*.05))},2,{int(w*.07)},{int(w*.07)},{int(h*.3)},1
 Style: grito,Arial Black,{big},{COLORS['amarelo']},&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(5,round(big*.09))},{max(2,round(big*.05))},5,{int(w*.06)},{int(w*.06)},0,1
 Style: titulo,Arial Black,{top},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(top*.08))},{max(2,round(top*.04))},8,{int(w*.08)},{int(w*.08)},{int(h*.1)},1
 Style: Preview,Arial,{int(fs*.5)},&H0060FFFF,&H000000FF,&H00101010,&H60000000,0,0,0,0,100,100,0,0,1,2,0,8,10,10,10,1
@@ -75,14 +81,22 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
         if color is not None and color not in COLORS:
             raise ValueError(f'caption.color deve ser um de {sorted(COLORS)}')
         tag = rf'\c{COLORS[color]}&' if color else ''
-        if style == 'fala':
+        base = COLORS[color] if color else (COLORS['amarelo'] if style == 'grito' else COLORS['branco'])
+        highlight = c.get('highlight', 'verde' if style == 'grito' else 'amarelo')
+        if highlight not in COLORS:
+            raise ValueError(f'caption.highlight deve ser um de {sorted(COLORS)}')
+        if style == 'legenda':
+            # Word-by-word captions: quick pop and no fade, so consecutive words feel snappy.
+            animation = r'{\fscx80\fscy80\t(0,80,\fscx106\fscy106)\t(80,140,\fscx100\fscy100)' + tag + '}'
+        elif style == 'fala':
             animation = r'{\fad(60,80)\fscx90\fscy90\t(0,120,\fscx100\fscy100)' + tag + '}'
         else:
             # Cartoon pop: grows past full size, settles, with a slight alternating tilt.
             tilt = (3 if i % 2 else -3) if style == 'grito' else 0
             animation = (r'{\fad(0,120)\fscx15\fscy15\frz' + str(tilt) +
                          r'\t(0,110,\fscx128\fscy128)\t(110,210,\fscx100\fscy100)' + tag + '}')
-        lines.append(f'Dialogue: {1 if style != "fala" else 0},{ass_time(start)},{ass_time(end)},{style},,0,0,0,,{animation}{clean_text(c["text"])}')
+        layer = 0 if style in ('fala', 'legenda') else 1
+        lines.append(f'Dialogue: {layer},{ass_time(start)},{ass_time(end)},{style},,0,0,0,,{animation}{clean_text(c["text"], COLORS[highlight], base)}')
     if preview:
         lines.append(f'Dialogue: 2,0:00:00.00,{ass_time(total)},Preview,,0,0,0,,PREVIA - LICENCAS PENDENTES')
     path.write_text(header + '\n'.join(lines) + '\n', encoding='utf-8-sig')
@@ -184,9 +198,17 @@ def main():
         return p
     outputs = spec['outputs']
     kinds = [o['format'] for o in outputs]
-    if kinds.count('long') < 1 or kinds.count('short') < 2:
-        raise ValueError('A entrega deve ter um longo e pelo menos dois Shorts.')
-    reference=spec.get('primary_source') or next(o for o in outputs if o['format']=='long')['clips'][0]['source']
+    delivery = spec.get('entrega', 'gameplay')
+    if delivery == 'gameplay':
+        if kinds.count('long') < 1 or kinds.count('short') < 2:
+            raise ValueError('A entrega deve ter um longo e pelo menos dois Shorts.')
+    elif delivery == 'shorts':
+        # Animated Shorts made in Roblox Studio: each output stands alone.
+        if not outputs or any(k != 'short' for k in kinds):
+            raise ValueError('entrega "shorts" aceita somente outputs com format "short"')
+    else:
+        raise ValueError('entrega deve ser "gameplay" ou "shorts"')
+    reference=spec.get('primary_source') or next((o for o in outputs if o['format']=='long'), outputs[0])['clips'][0]['source']
     native=probe(path_at(root,reference))
     args.out.mkdir(parents=True, exist_ok=True)
     completed = []
@@ -298,7 +320,20 @@ def main():
             make_ass(ass, output.get('captions', []), w, h, total, args.preview)
             # One input per distinct audio file; asplit feeds every use. Keeps argv short with many SFX.
             inputs = ['-i', assembled]
-            graph = ['[0:a]aresample=48000,asplit=2[base][side]']
+            # Dialogue (e.g. TTS lines) joins the gameplay sound before the split, so music ducks under it.
+            voices = output.get('voice', [])
+            graph = []
+            for n, row in enumerate(voices, start=1):
+                vat = number(row.get('at', 0), 'voice.at', hi=total)
+                vgain = number(row.get('gain_db', 0), 'voice.gain_db', lo=-60, hi=12)
+                inputs += ['-i', path_at(root, row['file'])]
+                graph.append(f'[{n}:a]aresample=48000,aformat=channel_layouts=stereo,volume={vgain}dB,adelay={round(vat*1000)}:all=1[v{n}]')
+            if voices:
+                graph.append('[0:a]aresample=48000' + f'[g0];[g0]' + ''.join(f'[v{n}]' for n in range(1, len(voices) + 1))
+                             + f'amix=inputs={len(voices)+1}:normalize=0:duration=first,asplit=2[base][side]')
+            else:
+                graph.append('[0:a]aresample=48000,asplit=2[base][side]')
+            first = len(voices) + 1
             uses = []
             for kind, rows in [('music', output.get('music', [])), ('sfx', sfx_rows)]:
                 for row in rows:
@@ -320,7 +355,7 @@ def main():
                     uses.append(dict(kind=kind, key=(kind, str(file), offset), file=file, at=at, offset=offset, length=length, gain=gain, pitch=pitch))
             keys = list(dict.fromkeys(u['key'] for u in uses))
             counts = collections.Counter(u['key'] for u in uses)
-            for idx, key in enumerate(keys, start=1):
+            for idx, key in enumerate(keys, start=first):
                 kind, file, offset = key
                 if kind == 'music':
                     inputs += ['-stream_loop', '-1']
@@ -332,7 +367,7 @@ def main():
                     graph.append(f'[{idx}:a]aresample=48000,aformat=channel_layouts=stereo[{label}_0]')
             served = collections.Counter(); music_labels = []; sfx_labels = []
             for n, u in enumerate(uses):
-                idx = keys.index(u['key']) + 1
+                idx = keys.index(u['key']) + first
                 src_label = f'in{idx}_{served[u["key"]]}'; served[u['key']] += 1
                 chain = []
                 if u['pitch'] != 1:

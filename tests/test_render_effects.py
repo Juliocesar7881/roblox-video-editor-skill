@@ -43,4 +43,27 @@ class RenderEffects(unittest.TestCase):
    self.assertEqual(rep[0]['sfx_total'],5)
    self.assertEqual(rep[0]['efeitos_visuais'],4)
 
+ def test_animated_short_with_voice_and_highlight(self):
+  ff=ffmpeg_or_none(); lib=SKILL/'assets/biblioteca-audio'
+  with tempfile.TemporaryDirectory() as td:
+   td=Path(td)
+   subprocess.run([ff,'-v','error','-y','-f','lavfi','-i','testsrc2=s=320x180:r=30:d=4','-pix_fmt','yuv420p',str(td/'cena.mp4')],check=True)
+   subprocess.run([ff,'-v','error','-y','-f','lavfi','-i','sine=f=300:d=1.2',str(td/'fala-01.wav')],check=True)
+   spec={'library':str(lib),'entrega':'shorts','outputs':[{'name':'anim.mp4','format':'short',
+     'clips':[{'source':'cena.mp4','in':0,'out':4}],
+     'music':[{'file':'musicas/curtos/hyperfun-short.mp3','gain_db':-18}],
+     'voice':[{'file':'fala-01.wav','at':0.5}],
+     'captions':[{'start':0.5,'end':1.7,'text':'QUAL É O *MAIS RÁPIDO*?','style':'legenda'}]}]}
+   (td/'t.json').write_text(json.dumps(spec),encoding='utf-8')
+   r=subprocess.run([sys.executable,str(SKILL/'scripts/renderizar.py'),str(td/'t.json'),'--out',str(td/'o')],capture_output=True,text=True)
+   self.assertEqual(r.returncode,0,r.stderr[-3000:])
+   rep=json.loads((td/'o'/'relatorio-render.json').read_text(encoding='utf-8'))
+   self.assertEqual([x['file'] for x in rep],['anim.mp4'])
+   self.assertAlmostEqual(rep[0]['duration'],4,delta=.25)
+   # A long output is rejected in shorts mode.
+   spec['outputs'][0]['format']='long'
+   (td/'t.json').write_text(json.dumps(spec),encoding='utf-8')
+   r=subprocess.run([sys.executable,str(SKILL/'scripts/renderizar.py'),str(td/'t.json'),'--out',str(td/'o2')],capture_output=True,text=True)
+   self.assertNotEqual(r.returncode,0)
+
 if __name__=='__main__':unittest.main()
