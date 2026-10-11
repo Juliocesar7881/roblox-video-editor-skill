@@ -1,7 +1,15 @@
 """Render an agent-authored edit decision list with FFmpeg. No automatic semantic editing."""
-import argparse, hashlib, json, math, shutil, tempfile
+import argparse, collections, hashlib, json, math, tempfile
 from pathlib import Path
 from media_utils import probe, run, filter_path
+
+# ASS colours are &HAABBGGRR.
+COLORS = {'branco': '&H00FFFFFF', 'amarelo': '&H0000E6FF', 'vermelho': '&H003C3CFF', 'verde': '&H005AE63C',
+          'azul': '&H00FFAA3C', 'rosa': '&H00C85AFF', 'laranja': '&H00008CFF', 'roxo': '&H00FF5AA0'}
+CAPTION_STYLES = ('fala', 'grito', 'titulo')
+EFFECT_TYPES = ('punch', 'zoom', 'shake', 'flash')
+FLASH_COLORS = {'branco': 'white', 'amarelo': 'yellow', 'vermelho': 'red', 'preto': 'black'}
+
 
 def number(value, name, lo=0, hi=1e8):
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not lo <= value <= hi:
@@ -32,9 +40,15 @@ def native_resolution(info, vertical):
     other=round(wide*9/16/2)*2
     return (other,wide) if vertical else (wide,other)
 
+def clean_text(value):
+    # All text is supplied as data. Escape ASS syntax and strip control codes.
+    text = str(value).replace('\\', '＼').replace('{', '(').replace('}', ')')
+    return ''.join(ch for ch in text if ord(ch) >= 32 or ch == '\n').replace('\n', r'\N')
+
 def make_ass(path, captions, w, h, total, preview):
     fs = round(w * .058) if h > w else round(h * .065)
-    # All text is supplied as data. Escape ASS syntax and strip control codes.
+    # Reaction text must read on a phone at a glance: much larger than dialogue.
+    big, top = round(fs * (2.0 if h > w else 1.8)), round(fs * 1.5)
     header = f'''[Script Info]
 ScriptType: v4.00+
 PlayResX: {w}
@@ -42,22 +56,97 @@ PlayResY: {h}
 WrapStyle: 0
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
-Style: Main,Arial,{fs},&H00FFFFFF,&H000000FF,&H00101010,&H60000000,-1,0,0,0,100,100,0,0,1,3,1,2,{int(w*.12)},{int(w*.16)},{int(h*.23)},1
+Style: fala,Arial,{fs},&H00FFFFFF,&H000000FF,&H00101010,&H60000000,-1,0,0,0,100,100,0,0,1,{max(3,round(fs*.06))},1,2,{int(w*.12)},{int(w*.16)},{int(h*.23)},1
+Style: grito,Arial Black,{big},{COLORS['amarelo']},&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(5,round(big*.09))},{max(2,round(big*.05))},5,{int(w*.06)},{int(w*.06)},0,1
+Style: titulo,Arial Black,{top},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(top*.08))},{max(2,round(top*.04))},8,{int(w*.08)},{int(w*.08)},{int(h*.1)},1
 Style: Preview,Arial,{int(fs*.5)},&H0060FFFF,&H000000FF,&H00101010,&H60000000,0,0,0,0,100,100,0,0,1,2,0,8,10,10,10,1
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 '''
     lines = []
-    for c in captions:
+    for i, c in enumerate(captions):
         start = number(c['start'], 'caption.start', hi=total)
-        end = number(c['end'], 'caption.end', lo=start+.01, hi=total)
-        text = str(c['text']).replace('\\', '＼').replace('{', '(').replace('}', ')')
-        text = ''.join(ch for ch in text if ord(ch) >= 32 or ch == '\n').replace('\n', r'\N')
-        animation = r'{\fad(60,80)\fscx90\fscy90\t(0,120,\fscx100\fscy100)}'
-        lines.append(f'Dialogue: 0,{ass_time(start)},{ass_time(end)},Main,,0,0,0,,{animation}{text}')
+        # Small float drift from summed clip durations should not abort a long render.
+        end = min(number(c['end'], 'caption.end', lo=start + .01, hi=total + .1), total)
+        style = c.get('style', 'fala')
+        if style not in CAPTION_STYLES:
+            raise ValueError(f'caption.style deve ser um de {CAPTION_STYLES}')
+        color = c.get('color')
+        if color is not None and color not in COLORS:
+            raise ValueError(f'caption.color deve ser um de {sorted(COLORS)}')
+        tag = rf'\c{COLORS[color]}&' if color else ''
+        if style == 'fala':
+            animation = r'{\fad(60,80)\fscx90\fscy90\t(0,120,\fscx100\fscy100)' + tag + '}'
+        else:
+            # Cartoon pop: grows past full size, settles, with a slight alternating tilt.
+            tilt = (3 if i % 2 else -3) if style == 'grito' else 0
+            animation = (r'{\fad(0,120)\fscx15\fscy15\frz' + str(tilt) +
+                         r'\t(0,110,\fscx128\fscy128)\t(110,210,\fscx100\fscy100)' + tag + '}')
+        lines.append(f'Dialogue: {1 if style != "fala" else 0},{ass_time(start)},{ass_time(end)},{style},,0,0,0,,{animation}{clean_text(c["text"])}')
     if preview:
-        lines.append(f'Dialogue: 1,0:00:00.00,{ass_time(total)},Preview,,0,0,0,,PREVIA - LICENCAS PENDENTES')
+        lines.append(f'Dialogue: 2,0:00:00.00,{ass_time(total)},Preview,,0,0,0,,PREVIA - LICENCAS PENDENTES')
     path.write_text(header + '\n'.join(lines) + '\n', encoding='utf-8-sig')
+
+def camera_filters(effects, w, h, fps, total):
+    """Timeline-level punch/zoom/shake as one zoompan pass and flashes as drawbox layers."""
+    z_terms, cx_terms, cy_terms, dx_terms, dy_terms, flashes = [], [], [], [], [], []
+    for e in effects:
+        kind = e.get('type')
+        if kind not in EFFECT_TYPES:
+            raise ValueError(f'effect.type deve ser um de {EFFECT_TYPES}')
+        a = number(e['at'], 'effect.at', hi=total)
+        default = {'punch': .35, 'zoom': 1.2, 'shake': .45, 'flash': .12}[kind]
+        d = number(e.get('duration', default), 'effect.duration', lo=.04, hi=max(.04, total - a + .05))
+        b = a + d
+        win = f'between(it,{a:.3f},{b:.3f})'
+        if kind == 'flash':
+            color = e.get('color', 'branco')
+            if color not in FLASH_COLORS:
+                raise ValueError(f'effect.color deve ser um de {sorted(FLASH_COLORS)}')
+            alpha = number(e.get('intensity', .75), 'flash.intensity', lo=.05, hi=1)
+            mid = a + d / 2
+            for lo, hi, al in [(a, mid, alpha), (mid, b, alpha * .45)]:
+                flashes.append(f"drawbox=x=0:y=0:w=iw:h=ih:color={FLASH_COLORS[color]}@{al:.2f}:t=fill:enable='between(t,{lo:.3f},{hi:.3f})'")
+            continue
+        if kind == 'shake':
+            amp = number(e.get('intensity', 1), 'shake.intensity', lo=.1, hi=3) * .018
+            # Margin so the shaken window never leaves the frame.
+            z_terms.append(f'{win}*{2.4*amp:.4f}')
+            decay = f'(1-(it-{a:.3f})/{d:.3f})'
+            dx_terms.append(f'{win}*{amp:.4f}*iw*{decay}*sin(107*(it-{a:.3f}))')
+            dy_terms.append(f'{win}*{amp*.7:.4f}*ih*{decay}*cos(83*(it-{a:.3f}))')
+            continue
+        amount = number(e.get('intensity', .28 if kind == 'punch' else .2), f'{kind}.intensity', lo=.02, hi=1)
+        cx, cy = (number(v, 'effect.center', hi=1) for v in e.get('center', [.5, .5]))
+        if kind == 'punch':
+            # Snap in on the hit, ease back out.
+            z_terms.append(f'{win}*{amount:.4f}*pow(1-(it-{a:.3f})/{d:.3f},2)')
+        else:
+            ramp = min(.18, d / 3)
+            z_terms.append(f'{win}*{amount:.4f}*min(1,min((it-{a:.3f})/{ramp:.3f},({b:.3f}-it)/{ramp:.3f}))')
+        cx_terms.append(f'{win}*{cx-.5:.4f}')
+        cy_terms.append(f'{win}*{cy-.5:.4f}')
+    filters = []
+    if z_terms:
+        z = '1+' + '+'.join(z_terms)
+        cx = '0.5' + ''.join('+' + t for t in cx_terms)
+        cy = '0.5' + ''.join('+' + t for t in cy_terms)
+        dx = ''.join('+' + t for t in dx_terms)
+        dy = ''.join('+' + t for t in dy_terms)
+        x = f"clip((iw-iw/zoom)*({cx}){dx},0,iw-iw/zoom)"
+        y = f"clip((ih-ih/zoom)*({cy}){dy},0,ih-ih/zoom)"
+        filters.append(f"zoompan=z='{z}':x='{x}':y='{y}':d=1:s={w}x{h}:fps={fps}")
+    return filters + flashes
+
+def atempo_chain(speed):
+    parts, s = [], speed
+    while s < .5:
+        parts.append('atempo=0.5'); s /= .5
+    while s > 2:
+        parts.append('atempo=2'); s /= 2
+    if abs(s - 1) > 1e-6:
+        parts.append(f'atempo={s:.6g}')
+    return parts
 
 def main():
     ap = argparse.ArgumentParser()
@@ -78,15 +167,18 @@ def main():
     catalog = json.loads((lib / 'catalogo.json').read_text(encoding='utf-8'))['assets']
     allowed = {(lib / a['path']).resolve(): a for a in catalog}
     credits = []
+    verified = {}
     def asset(name):
         p = path_at(lib, name)
         a = allowed.get(p)
         if not a:
             raise ValueError(f'Audio ausente no catalogo: {p}')
-        if hashlib.sha256(p.read_bytes()).hexdigest() != a['sha256']:
+        if p not in verified:
+            verified[p] = hashlib.sha256(p.read_bytes()).hexdigest() == a['sha256']
+        if not verified[p]:
             raise ValueError(f'Audio mudou desde a verificacao: {p}')
         if not args.preview and not a.get('commercial_allowed'):
-            raise ValueError(f'Licenca comercial nao comprovada: {p}. Use alternativa original ou gere --preview.')
+            raise ValueError(f'Licenca comercial nao comprovada: {p}. Use alternativa liberada ou gere --preview.')
         if a.get('attribution') and a['attribution'] not in credits:
             credits.append(a['attribution'])
         return p
@@ -124,8 +216,16 @@ def main():
             raise FileExistsError(f'Exportacao ja existe; escolha outra pasta: {dest}')
         if not output.get('music'):
             raise ValueError('Toda exportacao precisa de musica de fundo')
+        # Captions, effects and overlays may carry their own sound; they join the SFX list.
+        sfx_rows = list(output.get('sfx', []))
+        for group in ('captions', 'effects', 'overlays'):
+            for row in output.get(group, []):
+                if row.get('sfx'):
+                    at = row['start'] if group == 'captions' else row['at']
+                    sfx_rows.append({'file': row['sfx'], 'at': at, 'gain_db': row.get('sfx_gain_db', -8),
+                                     **({'pitch': row['sfx_pitch']} if 'sfx_pitch' in row else {})})
         # Validate licensing before potentially expensive video encoding.
-        for audio in [*output.get('music', []), *output.get('sfx', [])]:
+        for audio in [*output.get('music', []), *sfx_rows]:
             asset(audio['file'])
         with tempfile.TemporaryDirectory(prefix='roblox-edit-') as td:
             tmp = Path(td)
@@ -135,7 +235,14 @@ def main():
                 inf = probe(src)
                 start = number(clip['in'], 'in', hi=inf['duration'])
                 end = number(clip['out'], 'out', lo=start+.02, hi=inf['duration']+.01)
-                duration = end - start
+                src_duration = end - start
+                speed = number(clip.get('speed', 1), 'speed', lo=.25, hi=4)
+                freeze = number(clip.get('freeze', 0), 'freeze', hi=4)
+                reverse = bool(clip.get('reverse', False))
+                if reverse and src_duration > 3:
+                    raise ValueError('reverse aceita no maximo 3 s de fonte (usa memoria para todos os quadros)')
+                moving = src_duration / speed
+                duration = moving + freeze
                 total += duration
                 zoom = clip.get('zoom', [1, 1]); center = clip.get('center', [.5,.5])
                 z0, z1 = (number(z, 'zoom', lo=1, hi=2) for z in zoom)
@@ -151,23 +258,32 @@ def main():
                     filters += [f"crop=w='trunc(min(iw,ih*{ratio})/2)*2':h='trunc(min(ih,iw/{ratio})/2)*2':x='(iw-ow)*{cx}':y='(ih-oh)*{cy}'",
                                 f'scale={w}:{h}']
                     if z0 != 1 or z1 != 1:
-                        frames = max(1, round(duration * fps))
+                        frames = max(1, round(moving * fps))
                         filters += [f"zoompan=z='{z0}+({z1}-{z0})*min(on/{max(1,frames-1)},1)':x='(iw-iw/zoom)*{cx}':y='(ih-ih/zoom)*{cy}':d=1:s={w}x{h}:fps={fps}"]
                 else:
                     raise ValueError('framing deve ser crop ou fit')
-                # FPS before zoompan ensures its one-frame-per-input behavior preserves duration.
-                filters.insert(0, f'fps={fps}')
+                # Reverse/speed first, then FPS so zoompan's one-frame-per-input behavior preserves duration.
+                timing = (['reverse'] if reverse else []) + [f'setpts=(PTS-STARTPTS)/{speed}', f'fps={fps}']
+                filters = timing + filters
+                if freeze:
+                    filters.append(f'tpad=stop_mode=clone:stop_duration={freeze}')
                 filters += ['setsar=1', 'format=yuv420p']
-                af = [f"volume={number(clip.get('audio_gain_db',0), 'audio_gain_db', lo=-60, hi=12)}dB"]
+                # Only real audio is reversed/retimed: the silent stand-in is generated at the final length.
+                af = ((['areverse'] if reverse else []) + atempo_chain(speed)) if inf['has_audio'] else []
+                af.append(f"volume={number(clip.get('audio_gain_db',0), 'audio_gain_db', lo=-60, hi=12)}dB")
                 for mute in clip.get('mute', []):
-                    a = number(mute[0], 'mute.start', hi=duration)
-                    b = number(mute[1], 'mute.end', lo=a, hi=duration)
-                    af.append(f"volume=0:enable='between(t,{a},{b})'")
+                    # Mute pairs are seconds within the clip source; convert to output time.
+                    a = number(mute[0], 'mute.start', hi=src_duration)
+                    b = number(mute[1], 'mute.end', lo=a, hi=src_duration)
+                    if reverse:
+                        a, b = src_duration - b, src_duration - a
+                    af.append(f"volume=0:enable='between(t,{a/speed},{b/speed})'")
                 af += ['aresample=48000', 'aformat=channel_layouts=stereo', f'apad=whole_dur={duration}', f'atrim=duration={duration}', 'asetpts=PTS-STARTPTS']
                 part = tmp / f'clip-{ci:04}.mkv'; parts.append(part)
-                cmd = ['-ss', start, '-i', src]
+                cmd = ['-ss', start, '-t', src_duration, '-i', src]
                 if not inf['has_audio']:
-                    cmd += ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo']
+                    # Finite silence: an endless source would never let areverse/apad finish.
+                    cmd += ['-f', 'lavfi', '-t', duration, '-i', 'anullsrc=r=48000:cl=stereo']
                 cmd += ['-t', duration, '-map', '0:v:0', '-map', '0:a:0' if inf['has_audio'] else '1:a:0',
                         '-vf', ','.join(filters), '-af', ','.join(af), '-c:v', 'libx264', '-preset', 'fast', '-crf', '0',
                         '-r', fps, '-c:a', 'pcm_s16le', part]
@@ -180,23 +296,57 @@ def main():
             run(['-f','concat','-safe','0','-i',concat,'-c','copy',assembled])
             ass = tmp / 'captions.ass'
             make_ass(ass, output.get('captions', []), w, h, total, args.preview)
+            # One input per distinct audio file; asplit feeds every use. Keeps argv short with many SFX.
             inputs = ['-i', assembled]
             graph = ['[0:a]aresample=48000,asplit=2[base][side]']
-            index = 1; music_labels = []; sfx_labels = []
-            for kind in ['music', 'sfx']:
-                for row in output.get(kind, []):
+            uses = []
+            for kind, rows in [('music', output.get('music', [])), ('sfx', sfx_rows)]:
+                for row in rows:
                     file = asset(row['file'])
                     at = number(row.get('at', 0), 'at', hi=total)
-                    offset = number(row.get('offset', 0), 'offset', hi=probe(file)['duration']-.02)
-                    length = number(row.get('duration', total-at), 'duration', lo=.02, hi=total-at+.01)
-                    gain = number(row.get('gain_db', -23 if kind=='music' else -12), 'gain_db', lo=-60, hi=6)
+                    offset = number(row.get('offset', 0), 'offset', hi=probe(file)['duration']-.02) if kind == 'music' else 0
                     if kind == 'music':
-                        inputs += ['-stream_loop', '-1']
-                    inputs += ['-ss', offset, '-i', file]
-                    label = f'{kind}{index}'
-                    graph.append(f'[{index}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=duration={length},asetpts=PTS-STARTPTS,volume={gain}dB,afade=t=in:d=0.02,afade=t=out:st={max(0,length-.15)}:d=0.15,adelay={round(at*1000)}:all=1[{label}]')
-                    (music_labels if kind=='music' else sfx_labels).append(label)
-                    index += 1
+                        length = number(row.get('duration', total-at), 'duration', lo=.02, hi=total-at+.01)
+                    elif 'duration' in row:
+                        # A sound near the end is simply cut at the end of the video.
+                        length = max(.02, min(number(row['duration'], 'duration', lo=.02, hi=60), total - at))
+                    else:
+                        length = None
+                    gain = number(row.get('gain_db', -23 if kind=='music' else -8), 'gain_db', lo=-60, hi=6)
+                    if kind == 'sfx':
+                        # SFX gain is the desired peak level: quiet and loud library files land alike.
+                        gain -= allowed[file].get('peak_db', 0)
+                    pitch = number(row.get('pitch', 1), 'pitch', lo=.5, hi=2)
+                    uses.append(dict(kind=kind, key=(kind, str(file), offset), file=file, at=at, offset=offset, length=length, gain=gain, pitch=pitch))
+            keys = list(dict.fromkeys(u['key'] for u in uses))
+            counts = collections.Counter(u['key'] for u in uses)
+            for idx, key in enumerate(keys, start=1):
+                kind, file, offset = key
+                if kind == 'music':
+                    inputs += ['-stream_loop', '-1']
+                inputs += (['-ss', offset] if offset else []) + ['-i', file]
+                label = f'in{idx}'
+                if counts[key] > 1:
+                    graph.append(f'[{idx}:a]aresample=48000,aformat=channel_layouts=stereo,asplit={counts[key]}' + ''.join(f'[{label}_{n}]' for n in range(counts[key])))
+                else:
+                    graph.append(f'[{idx}:a]aresample=48000,aformat=channel_layouts=stereo[{label}_0]')
+            served = collections.Counter(); music_labels = []; sfx_labels = []
+            for n, u in enumerate(uses):
+                idx = keys.index(u['key']) + 1
+                src_label = f'in{idx}_{served[u["key"]]}'; served[u['key']] += 1
+                chain = []
+                if u['pitch'] != 1:
+                    # Varispeed: higher pitch is also shorter, like a cartoon sound.
+                    chain += [f'asetrate={round(48000*u["pitch"])}', 'aresample=48000']
+                if u['length'] is not None:
+                    chain += [f'atrim=duration={u["length"]}', 'asetpts=PTS-STARTPTS', f'volume={u["gain"]}dB',
+                              'afade=t=in:d=0.02', f'afade=t=out:st={max(0,u["length"]-.15)}:d=0.15']
+                else:
+                    chain += ['asetpts=PTS-STARTPTS', f'volume={u["gain"]}dB', 'afade=t=in:d=0.005']
+                chain.append(f'adelay={round(u["at"]*1000)}:all=1')
+                label = f'u{n}'
+                graph.append(f'[{src_label}]' + ','.join(chain) + f'[{label}]')
+                (music_labels if u['kind']=='music' else sfx_labels).append(label)
             graph += [''.join(f'[{s}]' for s in music_labels) + f'amix=inputs={len(music_labels)}:normalize=0,apad=whole_dur={total},atrim=duration={total}[music]',
                       '[music][side]sidechaincompress=threshold=0.025:ratio=8:attack=20:release=250[ducked]']
             all_audio = ['base', 'ducked', *sfx_labels]
@@ -205,21 +355,24 @@ def main():
             mixed = tmp / 'mixed.wav'
             run([*inputs, '-filter_complex_script', graph_file, '-map', '[mix]', '-vn', '-c:a','pcm_s16le', '-t', total, mixed], args.out / f'{Path(name).stem}-mix.log')
             # Two-pass loudness normalization measures the real mix, rather than guessing from file gain.
-            measured = run(['-i', mixed, '-af', 'loudnorm=I=-14:TP=-1.5:LRA=9:print_format=json', '-f','null','-'])
+            target_i, target_tp = config.get('target_loudness_lufs', -14), config.get('target_true_peak_dbtp', -1.5)
+            measured = run(['-i', mixed, '-af', f'loudnorm=I={target_i}:TP={target_tp}:LRA=9:print_format=json', '-f','null','-'])
             stats = json.loads(measured[measured.rfind('{'):measured.rfind('}')+1])
             if all(math.isfinite(float(stats[k])) for k in ['input_i','input_tp','input_lra','input_thresh','target_offset']):
-                norm = f"loudnorm=I=-14:TP=-1.5:LRA=9:measured_I={stats['input_i']}:measured_TP={stats['input_tp']}:measured_LRA={stats['input_lra']}:measured_thresh={stats['input_thresh']}:offset={stats['target_offset']}:linear=true"
+                # AAC encoding adds overshoot; aim the linear pass 0.5 dB below the true-peak target.
+                norm = f"loudnorm=I={target_i}:TP={target_tp-.5}:LRA=9:measured_I={stats['input_i']}:measured_TP={stats['input_tp']}:measured_LRA={stats['input_lra']}:measured_thresh={stats['input_thresh']}:offset={stats['target_offset']}:linear=true"
             else:
                 norm = 'alimiter=limit=0.84:level=false'
             final_inputs = ['-i', assembled, '-i', mixed]
-            video_graph = [f"[0:v]ass=filename='{filter_path(ass)}'[v0]"]
+            camera = camera_filters(output.get('effects', []), w, h, fps, total)
+            video_graph = [f"[0:v]{','.join(camera) if camera else 'null'}[v0]"]
             overlays = output.get('overlays', [])
             for k, overlay in enumerate(overlays):
                 file = path_at(root, overlay['file'])
                 if file.suffix.lower() != '.png':
                     raise ValueError('Overlay deve ser PNG transparente')
                 at = number(overlay['at'], 'overlay.at', hi=total)
-                length = number(overlay['duration'], 'overlay.duration', lo=.05, hi=total-at)
+                length = number(overlay['duration'], 'overlay.duration', lo=.05, hi=total-at+.05)
                 size = round(w * number(overlay.get('width',.2), 'overlay.width', lo=.01, hi=1))
                 x = round(w * number(overlay.get('x', .4), 'overlay.x', hi=1))
                 y = round(h * number(overlay.get('y', .3), 'overlay.y', hi=1))
@@ -227,8 +380,10 @@ def main():
                 video_graph += [f'[{k+2}:v]scale={size}:-1,format=rgba,trim=duration={length},fade=t=in:d=0.08:alpha=1,fade=t=out:st={max(0,length-.12)}:d=0.12:alpha=1,setpts=PTS-STARTPTS+{at}/TB[o{k}]']
                 yexpr = f'{y}+12*sin(6*(t-{at}))' if overlay.get('bob',True) else str(y)
                 video_graph += [f"[v{k}][o{k}]overlay=x={x}:y='{yexpr}':enable='between(t,{at},{at+length})':eof_action=pass[v{k+1}]"]
+            # Captions go last so stickers and camera moves never cover or shake the text.
+            video_graph += [f"[v{len(overlays)}]ass=filename='{filter_path(ass)}'[vout]"]
             final_graph = tmp / 'video-graph.txt'; final_graph.write_text(';\n'.join(video_graph), encoding='utf-8')
-            run([*final_inputs, '-filter_complex_script',final_graph,'-map',f'[v{len(overlays)}]','-map','1:a:0',
+            run([*final_inputs, '-filter_complex_script',final_graph,'-map','[vout]','-map','1:a:0',
                  '-af', norm,
                  '-c:v','libx264','-crf',str(output.get('crf',16)),'-preset','medium',
                  '-pix_fmt','yuv420p','-c:a','aac','-ar','48000','-b:a','320k',
@@ -241,10 +396,15 @@ def main():
         # Decode the complete output; a header-only check does not catch broken frames.
         run(['-v','error','-i',dest,'-f','null','-'], args.out / f'{Path(name).stem}-decode.log')
         (args.out / f'{Path(name).stem}-creditos.txt').write_text('\n'.join(credits), encoding='utf-8')
+        sfx_files = collections.Counter(Path(r['file']).name for r in sfx_rows)
         completed.append({'file':name,'format':output['format'],'duration':actual['duration'],
                           'width':actual['width'],'height':actual['height'],
                           'source_resolution':[native['width'],native['height']],
                           'resolution_policy':'source-native-tier','fps':actual['fps'],
+                          'sfx_total':len(sfx_rows),'sfx_por_minuto':round(len(sfx_rows)/max(total,1)*60,1),
+                          'sfx_distintos':len(sfx_files),'sfx_mais_repetido':sfx_files.most_common(1),
+                          'efeitos_visuais':len(output.get('effects', [])),
+                          'legendas':len(output.get('captions', [])),'stickers':len(output.get('overlays', [])),
                           'preview':args.preview,'audio_licenses_checked':not args.preview,
                           'visual_review':'pending','source_video_rights':'user_to_verify'})
         print(f'Exportado: {dest}', flush=True)

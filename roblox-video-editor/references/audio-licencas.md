@@ -5,7 +5,7 @@ Verificação inicial: 6 de outubro de 2026. O arquivo `biblioteca-audio/catalog
 | Pasta | Conteúdo | Situação comercial |
 |---|---|---|
 | `efeitos/fornecidos` | 16 MP3 indicados pelo usuário | Licença não comprovada |
-| `efeitos/capcut-convertidos` | 69 áudios extraídos dos vídeos | Licença não comprovada |
+| `efeitos/capcut-convertidos` | 77 efeitos do CapCut (69 `eem mp3-*` + 8 `em mp3-*` de socos/impactos), categorizados | **Liberados**: declarados livres de direitos pelo proprietário do repositório em 7/10/2026 |
 | `efeitos/originais-livres` | ding, sucesso, erro, whoosh, impacto, boing sintetizados neste projeto | Sem samples de terceiros; uso comercial permitido |
 | `musicas/longos` | 36 gravações completas de Kevin MacLeod | CC BY 4.0 com crédito |
 | `musicas/curtos` | 36 trechos de aproximadamente 30–48 s dessas gravações | Mesma licença; indicar edição |
@@ -14,7 +14,7 @@ Verificação inicial: 6 de outubro de 2026. O arquivo `biblioteca-audio/catalog
 
 As versões curtas são recortes com fade, não composições diferentes nem loops perfeitos. Ouça o ponto de repetição e use crossfade ou outra parte se necessário. Nos longos, alterne músicas conforme a cena; uma faixa cômica curta não precisa tocar repetida por vinte minutos.
 
-O repositório/pacote completo inclui **todos os 185 áudios**, por solicitação expressa do usuário. A instalação copia a biblioteca inteira para a skill e funciona sem download adicional de música. O manifesto de recuperação mantém somente os 78 arquivos de origem verificada; o catálogo da biblioteca contém todos. A publicação dos 85 efeitos e das 11 músicas pessoais com 11 trechos não muda suas licenças: os 107 arquivos continuam marcados como não verificados, sem inferir permissão comercial ou de redistribuição. Nomes como Wii Party, New Donk City e Homage não constituem licença.
+O repositório/pacote completo inclui **todos os 193 áudios**. A instalação copia a biblioteca inteira para a skill e funciona sem download adicional de música. O manifesto de recuperação mantém somente os 78 arquivos de origem verificada; o catálogo da biblioteca contém todos. Os 16 memes e as 11 músicas pessoais com 11 trechos (38 arquivos) continuam marcados como não verificados, sem inferir permissão comercial ou de redistribuição. Nomes como Wii Party, New Donk City e Homage não constituem licença.
 
 ## Evitar repetição
 
@@ -26,9 +26,13 @@ Baixamos diretamente do [catálogo do autor](https://incompetech.com/music/royal
 
 Para cada música usada, inclua título, Kevin MacLeod, link da página da faixa, link CC BY 4.0 e nota de cortes/fades/ajuste de volume/sincronização. Use os arquivos `*-credito.txt` ou o campo `attribution`. Não atribua a licença da música ao vídeo inteiro: ter música CC BY não obriga colocar sua gameplay sob Creative Commons.
 
-Os memes fornecidos podem conter áudios de jogos, programas, falas ou gravações de terceiros. Não inferir licença pelo nome, duração, site que oferece download ou popularidade. Os convertidos `eem mp3-*` mantêm seus nomes porque ainda precisam de escuta para identificação. Marque tags após ouvir; não invente o conteúdo. Antes de habilitar comercialmente um efeito externo, obtenha licença da fonte/titular, salve a comprovação, registre requisitos de crédito e atualize o catálogo e o hash. Na falta de comprovação, substitua pelo efeito original apropriado.
+Os 77 efeitos do CapCut têm `license_status: user-declared-royalty-free` e `commercial_allowed: true` porque o proprietário do repositório declarou que não têm direitos autorais. Essa é uma declaração do proprietário, não uma verificação feita pela skill; a responsabilidade por ela é dele. Cada registro traz `category`, `tags` (rótulos do modelo AudioSet), `peak_db` e `onset_seconds`. Nenhum tem fala detectada; `eem mp3-36` e `eem mp3-39` são gritos e têm aviso de volume.
 
-Sugestões de função para os arquivos fornecidos, **a confirmar por escuta**, antes de usá-los numa prévia ou de comprovar sua licença:
+Os memes fornecidos (`efeitos/fornecidos`) podem conter áudios de jogos, programas, falas ou gravações de terceiros. Não inferir licença pelo nome, duração, site que oferece download ou popularidade. Antes de habilitar comercialmente um efeito externo, obtenha licença da fonte/titular, salve a comprovação, registre requisitos de crédito e atualize o catálogo e o hash. Na falta de comprovação, substitua pelo efeito original apropriado.
+
+Para escolher efeitos liberados, use `scripts/selecionar_sfx.py --library BIBLIOTECA --categoria CATEGORIA --timeline PROJETO/timeline.json`; ele lista os sons da categoria começando pelos menos usados na timeline.
+
+Sugestões de função para os memes fornecidos (só prévia), **a confirmar por escuta**, antes de usá-los numa prévia ou de comprovar sua licença:
 
 | Arquivos | Função editorial provável | Alternativa original |
 |---|---|---|
