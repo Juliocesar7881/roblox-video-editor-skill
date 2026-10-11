@@ -1,5 +1,12 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.8.0 — caretas da skill de referência, noob em proporção certa e legenda junto do corte
+- Rosto trocado pelas caretas da skill eibrunoruan/roblox-shorts-generator (Expressions.lua + SpeechMouth.lua portados sem mudanças): `curious`, `panic`, `angry`, `eat`, `hurt`, `relief`, `greedy`, `disgust`, `neutral`, com estouro na troca, piscada, sobrancelhas balançando e boca de fala; os nomes antigos viraram apelidos.
+- Gota de suor escorrendo do rosto (careta `panic`) no lugar do sticker de gotas solto na tela.
+- Noob com as cores e as proporções do noob da skill de referência (cabeça padrão): as pernas não parecem mais minúsculas.
+- Legendas: o corte para cada opção entra no começo da frase dela e nenhum grupo de legenda atravessa um corte (`cortes=`); `revisar_legendas.py` acusa legenda atravessando corte.
+- Câmeras dos planos abertos aproximadas para o rosto continuar com ≥ 8% da altura com a cabeça padrão.
+
 ## v1.7.0 — rosto igual às referências, cortes limpos e sincronia de quadro
 - Rosto novo, medido nas referências do cliente: olhos ovais altos e separados (antes encostavam), elipses de verdade (textura `whiteCircle.png` do Studio), pupila estreita com brilho, sobrancelhas grossas, boca escura com língua, gota de suor verde-água, olhos X de nocaute, e desenho com a luz da cena (sem a faixa amarela da pálpebra antiga).
 - Animação do rosto num controlador único por quadro: piscada que achata o olho, sobrancelhas que sobem na ênfase da fala, boca em 4 aberturas firmes; antes os tweens de piscar e de expressão brigavam e podiam travar o olho.

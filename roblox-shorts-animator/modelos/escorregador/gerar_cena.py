@@ -21,6 +21,19 @@ def estimar(roteiro):
     return falas
 
 
+LIGACAO = {'o', 'a', 'os', 'as', 'ou', 'e', 'um', 'uma', 'no', 'na', 'do', 'da'}
+
+
+def inicio_frase(fala, alvo):
+    """Inicio da frase da palavra (volta pelos artigos/conjuncoes: "ou o amarelo" -> "ou"). O corte para
+    a opcao entra junto com a legenda da frase, nunca depois dela."""
+    ws = fala['palavras']
+    i = next(k for k, w in enumerate(ws) if alvo in w['w'].lower())
+    while i > 0 and re.sub(r'[^\w]', '', ws[i - 1]['w'].lower()) in LIGACAO and not re.search(r'[,.!?…]$', ws[i - 1]['w']):
+        i -= 1
+    return ws[i]['start']
+
+
 def palavra(fala, alvo):
     for w in fala['palavras']:
         if alvo in w['w'].lower():
@@ -56,39 +69,39 @@ def main():
     pouso = voo + 1.6
     ini['09'] = max(pouso + 0.75, ini['08'] + F['08']['duracao'] + 0.2); t = ini['09'] + F['09']['duracao']
     fim = round(t + 0.6, 3)
-    cv = ini['02'] + palavra(F['02'], 'vermelho') - 0.05
-    ca = ini['02'] + palavra(F['02'], 'azul') - 0.05
-    cm = ini['02'] + palavra(F['02'], 'amarelo') - 0.05
+    cv = ini['02'] + inicio_frase(F['02'], 'vermelho') - 0.05
+    ca = ini['02'] + inicio_frase(F['02'], 'azul') - 0.05
+    cm = ini['02'] + inicio_frase(F['02'], 'amarelo') - 0.05
 
     ev = []
     E = lambda t, corpo: ev.append(f'\t{{t = {t:.3f}, f = function()\n{corpo}\n\tend}},')
     # Gancho: close baixo, surpreso, olhando para cima.
     E(0, '''		raiz.CFrame = inicio
 		K.anim(noob, "idle")
-		K.rosto(noob, "surpreso", 0)
+		K.rosto(noob, "curious", 0)
 		K.olhar(noob, 0, -0.8, 0)
 		cam.rosto(noob, 4.8, 36, {altura = -0.6, queixo = 0.1})''')
     E(0.6, '		cam.rosto(noob, 4.1, 34, {altura = -0.5, queixo = 0.1, t = 1.6})')
     # Fala 02: um corte por escorregador, no instante da palavra.
-    E(ini['02'] - 0.05, '		K.rosto(noob, "duvida")')
+    E(ini['02'] - 0.05, '		K.rosto(noob, "curious")')
     E(cv, '		K.inserto(true)\n		cam.corte(V(-14, 4.5, -11), V(-22, 6.5, 9), 58)\n		cam.mover(V(-15, 4.2, -9), V(-22, 6.5, 9), 1.1, 54)')
     E(ca, '		cam.corte(V(3, 6, -9), V(-6, 10, 22), 64)\n		cam.mover(V(3, 8, -7), V(-6, 12, 22), 1.2, 62)')
     E(cm, '		cam.corte(V(30, 3, -24), V(24, 10, 20), 58)\n		cam.mover(V(30, 5, -26), V(24, 50, 64), 1.6, 60)')
     # Fala 03 e contagem: noob grande na frente, os tres escorregadores atras.
     E(ini['03'] - 0.05, '''		K.inserto(false)
-		K.rosto(noob, "medo")
+		K.rosto(noob, "panic")
 		K.olhar(noob, 0, 0, 0.1)
-		cam.corte(V(0, 4.0, -19.2), V(0, 7.2, 10), 66)
-		cam.mover(V(0, 4.1, -18.2), V(0, 7.2, 10), 2.4, 64)''')
+		cam.corte(V(0, 4.0, -16.4), V(0, 6.6, 10), 60)
+		cam.mover(V(0, 4.1, -15.4), V(0, 6.6, 10), 2.4, 58)''')
     # Sem tremedeira na contagem (pedido): a tensao vem do rosto e do olhar indo de um lado ao outro.
     for k in range(10):
         dx = -1 if k % 2 == 0 else 1
         E(contagem + k * 0.5 + 0.05, f'		K.olhar(noob, {dx}, -0.25, 0.1)')
-    E(contagem + 2.5, '''		K.rosto(noob, "nervoso")
+    E(contagem + 2.5, '''		K.rosto(noob, "panic")
 		cam.rosto(noob, 4.2, 36, {altura = -0.3})
 		cam.rosto(noob, 3.4, 33, {altura = -0.3, t = 2.4})''')
     # Fala 04: escolhe o vermelho e sai correndo.
-    E(ini['04'] - 0.05, '''		K.rosto(noob, "confiante")
+    E(ini['04'] - 0.05, '''		K.rosto(noob, "greedy")
 		K.olhar(noob, -0.6, 0)
 		K.anim(noob, "apontar", {loop = false})
 		cam.rosto(noob, 4.4, 38, {lado = 1.2, altura = -0.4})''')
@@ -96,31 +109,31 @@ def main():
 		cam.seguir(raiz, V(-7, 2.2, -5.5), 1.3)''')
     # No topo do vermelho: desce devagar ate travar.
     E(topo_vermelho, f'''		K.sentarEm(noob, e1[1], V(0, 0, -1))
-		K.rosto(noob, "feliz")
+		K.rosto(noob, "relief")
 		K.deslizar(noob, meio1, {trava:.3f} - K.tempo())
 		cam.seguir(noob.Head, V(4, 0.6, -7.5), 2.3, V(0, -1.0, 0))''')
     E(trava, '''		K.anim(noob, "sentar")
-		K.rosto(noob, "duvida")
+		K.rosto(noob, "curious")
 		cam.rosto(noob, 5.4, 38, {lado = 0.9, altura = 0.15, queixo = 0.05})''')
     E(ini['05'] + 0.1, '		K.olhar(noob, 0.2, 0.9)')
     # Fala 06: o amarelo gigante.
     # Corte com teletransporte: K.cortarPara troca a animacao um quadro antes (sem o quadro do noob
     # ainda sentado no lugar novo).
     E(ini['06'] - 0.07, '''		K.cortarPara(noob, K.emPe(V(22.5, 0, -18), V(24.5, 0, -26)), "idle", function()
-			cam.corte(V(21, 2.4, -25), V(24.5, 9, 6), 60)
-			cam.mover(V(21.2, 2.2, -24.2), V(24.5, 12, 6), 1.6, 58)
+			cam.corte(V(21, 2.4, -25), V(24.5, 9, 6), 46)
+			cam.mover(V(21.2, 2.2, -24.2), V(24.5, 12, 6), 1.6, 44)
 		end)
-		K.rosto(noob, "medo")
+		K.rosto(noob, "panic")
 		K.olhar(noob, 0.3, -1)''')
     E(topo_amarelo, '''		K.sentarEm(noob, e3[1], V(0, 0, -1))
-		K.rosto(noob, "medo")
+		K.rosto(noob, "panic")
 		K.olhar(noob, 0, 1)
 		K.inserto(true)
 		-- Camera baixa no pe do escorregador olhando para o noob la no topo: mostra o tamanho.
 		cam.corte(V(31, 2.2, -17), e3[1] + V(0, 2, 0), 52)
 		cam.mover(V(30, 2.8, -13.5), e3[1] + V(0, 2, 0), 0.85, 46)''')
     E(ini['07'] - 0.15, '''		K.inserto(false)
-		K.rosto(noob, "confiante")
+		K.rosto(noob, "greedy")
 		K.olhar(noob, 0, 0)
 		cam.rosto(noob, 4.6, 40, {lado = 1.3, altura = 0.1, queixo = 0.1})''')
     # Descida rapida, grito e voo com cambalhotas.
@@ -131,19 +144,19 @@ def main():
 				-- Sem animacao o R15 deitado abre os bracos em T (cara de bug); idle sem transicao deixa
 				-- o corpo esticado com os bracos ao lado. O corte para a vista de cima espera a pose
 				-- entrar (K.cortarPara). Olhos de nocaute (X) como na referencia.
-				K.rosto(noob, "nocaute", 0.05)
+				K.rosto(noob, "hurt", 0.05)
 				K.cortarPara(noob, pouso, "idle", function()
 					local c = noob.Head.Position
-					cam.corte(c + V(0, 9.5, -2.2), c + V(0, 0, -2.0), 52, V(0, 0, 1))
+					cam.corte(c + V(0, 7.0, -1.8), c + V(0, 0, -1.6), 50, V(0, 0, 1))
 				end)
 				K.poeira(V(24, K.chao(V(24, 0, -60)) + 0.3, -60), 30)
 				cam.tremor(0.8, 0.5)
 			end)
-			cam.seguir(noob.Head, V(6, 1.2, -8), 1.6, V(0, -1.4, 0))
+			cam.seguir(noob.Head, V(4.6, 1.0, -6.2), 1.6, V(0, -1.1, 0))
 		end)
 		cam.seguir(noob.Head, V(3.2, 1.2, -9), 2.6, V(0, -1.7, 0))''')
-    E(ini['08'] - 0.1, '		K.rosto(noob, "grito")\n		K.olhar(noob, 0, 0)')
-    E(pouso + 0.6, '''		K.rosto(noob, "tonto")
+    E(ini['08'] - 0.1, '		K.rosto(noob, "panic")\n		K.olhar(noob, 0, 0)')
+    E(pouso + 0.6, '''		K.rosto(noob, "hurt")
 		local c = noob.Head.Position
 		cam.corte(c + V(0, 5.2, -0.2), c, 40, V(0, 0, 1))
 		cam.mover(c + V(0, 4.3, -0.2), c, 2.2, 38, nil, V(0, 0, 1))''')

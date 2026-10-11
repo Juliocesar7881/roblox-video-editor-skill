@@ -1,5 +1,10 @@
 # Validação antes da publicação
 
+## v1.8.0 (11 de outubro de 2026)
+
+- 32 testes passaram, incluindo o porte fiel das caretas (tela 600×300, olhos em x 103/197, as 9 caretas e os apelidos), legenda que quebra no corte e o `revisar_legendas.py` acusando legenda atravessando corte.
+- Piloto regravado: `[auditoria] total 0`, `[camera] total 0`, `[legenda] total 0`; cortes das opções em 2,650 / 4,100 / 4,617 s com as legendas "O VERMELHO," / "O AZUL..." / "OU O AMARELO GIGANTE?" entrando junto; quadros revisados.
+
 ## v1.7.0 (11 de outubro de 2026)
 
 - 31 testes passaram, incluindo: gravador reamostrando pelo tempo de captura (A A A B C C C D); marcas de sincronia medindo um atraso injetado de 0,05 s (±0,02); geometria do rosto (vão entre os olhos ≥ 0,06, altura/largura 1,6–2,1); proteções de corte (`K.cortarPara`, deslizar inclinado no 1º quadro, sem parar todas as animações no pouso).

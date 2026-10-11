@@ -154,9 +154,9 @@ class Animator(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             spec = Path(td) / 't.json'
 
-            def checar(caps, overlays=()):
+            def checar(caps, overlays=(), cortes=()):
                 out = {'name': 'x.mp4', 'format': 'short', 'resolution': [540, 960], 'clips': [],
-                       'captions': caps, 'overlays': list(overlays)}
+                       'captions': caps, 'overlays': list(overlays), 'cortes': list(cortes)}
                 spec.write_text(json.dumps({'outputs': [out]}), encoding='utf-8')
                 return revisar(spec, fps=10)
 
@@ -171,6 +171,8 @@ class Animator(unittest.TestCase):
             problemas = ' | '.join(checar(ruins, [{'file': 'contagem-5.png', 'at': 1.5, 'duration': 1, 'y': .6}]))
             for trecho in ('sobrepostas', 'pisca', 'linhas de legenda ao mesmo tempo', 'na faixa da legenda'):
                 self.assertIn(trecho, problemas)
+            atravessa = checar([{'start': 4.67, 'end': 6.8, 'text': 'OU O AMARELO GIGANTE?', 'style': 'karaoke'}], cortes=[5.74])
+            self.assertTrue(any('atravessa o corte' in x for x in atravessa))
 
     @unittest.skipIf(ffmpeg_or_none() is None, 'FFmpeg indisponivel')
     def test_slide_squeak_lands_on_the_stop(self):
@@ -272,19 +274,27 @@ class Animator(unittest.TestCase):
             self.assertIsNotNone(lat)
             self.assertAlmostEqual(lat, 0.05, delta=0.02)
 
-    def test_face_matches_client_references(self):
-        # Medidas das referencias do cliente: olhos ovais altos (altura ~1,85x a largura) com um vao
-        # entre eles (antes encostavam: "o olho ta muito colado"), elipses de verdade e luz da cena.
-        import re
+    def test_face_is_the_reference_skill_port(self):
+        # Pedido do cliente: as mesmas caretas da skill eibrunoruan/roblox-shorts-generator.
         kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
-        m = re.search(r'local OLHO = \{ x = \{ E = ([\d.]+), D = ([\d.]+) \}, y = [\d.]+, w = ([\d.]+), h = ([\d.]+), borda = ([\d.]+) \}', kit)
-        e, d, w, h, borda = map(float, m.groups())
-        self.assertGreaterEqual((d - e) - w, 0.06)
-        self.assertTrue(1.6 <= h / w <= 2.1)
-        for trecho in ('rbxasset://textures/whiteCircle.png', 'nocaute = {', 'gui.LightInfluence = AnimKit.ROSTO_LUZ',
-                       'BindToRenderStep("AnimKitRosto"', 'SOBRANCELHA.minimo'):
+        for trecho in ('gui.CanvasSize = Vector2.new(600, 300)', 'for index, x in ipairs({ 103, 197 }) do',
+                       'local size = name == "panic" and Vector2.new(74, 68) or Vector2.new(62, 54)',
+                       'e.sweat.Position = UDim2.fromOffset(252, 27 + slide * 42)',
+                       'local blink = blinkPhase > 3.48 and blinkPhase < 3.7',
+                       'local resting = name == "panic" and 20 or name == "greedy" and 34 or 7',
+                       'AnimKit.CABECA = 1.0'):
             self.assertIn(trecho, kit)
-        self.assertNotIn('Palpebra', kit)  # a palpebra sem luz aparecia como uma faixa amarela sobre os olhos
+        for nome in ('curious', 'panic', 'angry', 'eat', 'hurt', 'relief', 'greedy', 'disgust', 'neutral'):
+            self.assertIn(f'{nome} = true', kit)
+        self.assertIn('medo = "panic"', kit)  # nomes antigos continuam funcionando
+
+    def test_captions_never_cross_a_cut(self):
+        ws = 'O vermelho, o azul... ou o amarelo gigante?'.split()
+        tempos = [(0, .22), (.22, 1.18), (1.46, 1.52), (1.52, 1.98), (1.98, 2.9), (2.9, 3.1), (3.1, 3.48), (3.48, 3.98)]
+        f = [{'id': '1', 'palavras': [{'w': w, 'start': a, 'end': b} for w, (a, b) in zip(ws, tempos)]}]
+        corte = 10 + 3.1 - 0.05  # corte no meio da frase: "ou o" | "amarelo gigante?"
+        caps = legendas_karaoke(f, {'1': 10}, cortes=[corte])
+        self.assertFalse([c for c in caps if c['start'] < corte - 0.2 and c['end'] > corte + 0.2])
 
     def test_animkit_clean_cuts_and_focus(self):
         kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')

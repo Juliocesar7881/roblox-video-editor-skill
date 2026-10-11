@@ -10,6 +10,8 @@ Checks
     empilhada; um titulo no alto da tela nao conta)
   * texto encostando na borda (cortado)
   * legenda ao mesmo tempo que um sticker/selo na faixa da legenda
+  * legenda atravessando um corte de camera ("cortes" na saida): ela anunciaria o que ainda nao
+    apareceu na tela ou ficaria do plano anterior
 Exit code 1 when anything is found, so it can gate a render.
 """
 import argparse, json, subprocess, sys, tempfile
@@ -55,6 +57,11 @@ def revisar(spec_path, saida=None, fps=30, largura=360):
         for c in caps:
             if '*' in str(c['text']) and c['end'] - c['start'] < 0.12:
                 problemas.append(f'{nome} {c["start"]:.2f}s: destaque de {(c["end"] - c["start"]) * 1000:.0f} ms (pisca) "{c["text"]}"')
+        # 1b) Legenda atravessando corte: comeca mais de 0,2 s antes e termina mais de 0,2 s depois.
+        for corte in o.get('cortes', []):
+            for c in caps:
+                if c['start'] < corte - 0.2 and c['end'] > corte + 0.2:
+                    problemas.append(f'{nome} {corte:.2f}s: legenda "{c["text"]}" atravessa o corte de camera')
         # 2) Legenda junto com sticker/selo na faixa da legenda.
         for ov in o.get('overlays', []):
             a, b = ov['at'], ov['at'] + ov['duration']

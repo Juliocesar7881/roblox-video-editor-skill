@@ -70,7 +70,8 @@ def main():
     ini = T['falas']
     fim = T['fim']
 
-    captions = legendas_karaoke(falas, ini)
+    # Nenhuma legenda atravessa os cortes para as opcoes: ela entra junto com o escorregador.
+    captions = legendas_karaoke(falas, ini, cortes=T['cortes_opcoes'])
     # Nada de legenda junto com os selos da contagem (mesma faixa da tela): corta o que invadir.
     c0, c1 = T['contagem'], T['contagem'] + 5
     captions = [c for c in captions if not (c0 <= c['start'] < c1)]
@@ -122,7 +123,7 @@ def main():
     # O amarelo gigante.
     S.append(sfx('whoosh', ini['06'] - 0.05))
     S.append(sfx('timpano', ini['06'] + 0.1, gain=-9))
-    O.append({'file': OV + 'suor.png', 'at': round(ini['06'] + 0.3, 3), 'duration': 1.2, 'x': 0.6, 'y': 0.16, 'width': 0.28})
+    # Sem sticker de gotas solto na tela: a gota de suor escorre do proprio rosto (careta 'panic').
     S.append(sfx('whoosh', T['topo_amarelo'], pitch=1.1))
     S.append(sfx('pop', ini['07']))
     # Descida (atrito acelerando + ar no lancamento), grito, voo com apito descendo e pouso.
@@ -146,7 +147,8 @@ def main():
 
     musica = [{'file': 'musicas/curtos/monkeys-spinning-monkeys-short.mp3', 'at': 0, 'gain_db': -24 if voice else -20}]
     out = {'name': a.nome, 'format': 'short', 'clips': [{'source': a.cena, 'in': 0, 'out': round(fim - 0.02, 3), 'framing': 'crop'}],
-           'music': musica, 'voice': voice, 'sfx': S, 'effects': E, 'captions': captions, 'overlays': O}
+           'music': musica, 'voice': voice, 'sfx': S, 'effects': E, 'captions': captions, 'overlays': O,
+           'cortes': [round(c, 3) for c in T['cortes_opcoes']]}
     if a.previa:
         out['resolution'] = [540, 960]
         out['fps'] = 30
