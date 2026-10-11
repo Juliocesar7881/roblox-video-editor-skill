@@ -1,5 +1,14 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.5.0 — regras do roblox-shorts-generator, pacote de animação e boca falando
+- Regras de produção do sistema de eibrunoruan/roblox-shorts-generator incorporadas (`references/regras-producao.md`): rosto como protagonista, colisões em 5 tempos, voz Roger com ID e idioma conferidos, contagem de 5 s, legendas, qualidade de imagem.
+- Noob em R15 com os pacotes oficiais do Roblox: Cartoony (locomoção), Levitation e emotes R15; cabeça clássica maior via `HeadScale`; suporte a juntas `AnimationConstraint`.
+- Boca sincronizada com a voz real (`K.falar` + `scripts/envelope_boca.py`).
+- Auditoria de câmera (`K.auditarCamera`): rosto pequeno, de costas, de perfil ou fora do quadro; `K.inserto` para planos sem o protagonista.
+- Sem tremedeira na contagem; voo com rolamento lateral (rosto para a câmera); descida guiada pelo relógio; pose sentado com pernas esticadas (`K.pose`).
+- Corrigido: tabelas fracas que perdiam animações e poses ("animações perdidas"); rosto montado antes da escala da cabeça.
+- Legendas "uma ideia por vez" com divisão equilibrada que nunca termina em artigo; Lilita One (OFL) com a receita do amigo: contorno `#10283E`, sombra para baixo, destaque `#FFE54F`, números em ciano, entrada elástica, encolhe se não couber.
+
 ## v1.4.0 — animação sem bugs e legendas no estilo das referências
 - Auditoria automática no Studio (`K.auditar`): detecta, com tempo e peça, qualquer parte do corpo entrando no chão ou em objetos; a skill exige corrigir até zerar antes de gravar.
 - Corrigido: noob enterrado no chão (o rig do Roblox vinha com a cabeça como PrimaryPart), pernas atravessando rampas nas dobras, pose sentada misturando com a em pé, passada de corrida, voo saindo da rampa, animações tocando antes de carregar.

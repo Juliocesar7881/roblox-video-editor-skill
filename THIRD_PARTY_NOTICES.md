@@ -16,3 +16,5 @@ Os 16 efeitos fornecidos em `efeitos/fornecidos` e as 11 músicas fornecidas com
 
 
 A fonte **Fredoka One** (`roblox-video-editor/assets/fontes/FredokaOne-Regular.ttf`, de Milena Brandão) é distribuída sob a SIL Open Font License 1.1, que permite uso comercial e redistribuição junto de software.
+
+A fonte **Lilita One** (`roblox-video-editor/assets/fontes/LilitaOne-Regular.ttf`, de Juan Montoreano) é distribuída sob a SIL Open Font License 1.1; a licença está em `assets/fontes/OFL-LilitaOne.txt`. As regras de `roblox-shorts-animator/references/regras-producao.md` foram adaptadas do repositório eibrunoruan/roblox-shorts-generator com autorização do usuário.

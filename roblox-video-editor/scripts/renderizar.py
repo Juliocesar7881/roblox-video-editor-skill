@@ -5,7 +5,7 @@ from media_utils import probe, run, filter_path
 
 # ASS colours are &HAABBGGRR.
 COLORS = {'branco': '&H00FFFFFF', 'amarelo': '&H0000E6FF', 'vermelho': '&H003C3CFF', 'verde': '&H005AE63C',
-          'azul': '&H00FFAA3C', 'rosa': '&H00C85AFF', 'laranja': '&H00008CFF', 'roxo': '&H00FF5AA0', 'ouro': '&H0050E2FF'}
+          'azul': '&H00FFAA3C', 'rosa': '&H00C85AFF', 'laranja': '&H00008CFF', 'roxo': '&H00FF5AA0', 'ouro': '&H004FE5FF', 'ciano': '&H00FFE960', 'coral': '&H007777FF'}
 CAPTION_STYLES = ('fala', 'legenda', 'karaoke', 'grito', 'titulo')
 FONTES = Path(__file__).resolve().parents[1] / 'assets' / 'fontes'
 EFFECT_TYPES = ('punch', 'zoom', 'shake', 'flash')
@@ -64,7 +64,7 @@ WrapStyle: 0
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
 Style: fala,Arial,{fs},&H00FFFFFF,&H000000FF,&H00101010,&H60000000,-1,0,0,0,100,100,0,0,1,{max(3,round(fs*.06))},1,2,{int(w*.12)},{int(w*.16)},{int(h*.23)},1
 Style: legenda,Arial Black,{round(fs*1.5)},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(fs*.11))},{max(2,round(fs*.05))},2,{int(w*.07)},{int(w*.07)},{int(h*.3)},1
-Style: karaoke,Fredoka One,{round(w*.095 if h > w else h*.086)},&H00FFFFFF,&H000000FF,&H00301A12,&H00301A12,0,0,0,0,86,108,-2,0,1,{max(4,round((w*.095 if h > w else h*.086)*.11))},{max(2,round((w*.095 if h > w else h*.086)*.08))},2,{int(w*.05)},{int(w*.05)},{int(h*.285)},1
+Style: karaoke,Lilita One,{round(w*.104 if h > w else h*.094)},&H00FFFFFF,&H000000FF,&H003E2810,&H003E2810,0,0,0,0,100,100,0,0,1,{max(4,round((w*.104 if h > w else h*.094)*.062))},0,2,{int(w*.06)},{int(w*.06)},{int(h*.285)},1
 Style: grito,Arial Black,{big},{COLORS['amarelo']},&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(5,round(big*.09))},{max(2,round(big*.05))},5,{int(w*.06)},{int(w*.06)},0,1
 Style: titulo,Arial Black,{top},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,{max(4,round(top*.08))},{max(2,round(top*.04))},8,{int(w*.08)},{int(w*.08)},{int(h*.1)},1
 Style: Preview,Arial,{int(fs*.5)},&H0060FFFF,&H000000FF,&H00101010,&H60000000,0,0,0,0,100,100,0,0,1,2,0,8,10,10,10,1
@@ -89,7 +89,25 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
             raise ValueError(f'caption.highlight deve ser um de {sorted(COLORS)}')
         if style == 'karaoke':
             # Reference style: the group stays, the spoken word turns yellow; the group fades in once.
-            animation = (r'{ad(90,0)scx92scy92	(0,90,scx100scy100)' if c.get('entrada') else '{') + tag + '}'
+            # Receita das referencias: sombra deslocada para baixo e entrada elastica de cada grupo.
+            sombra = r'\xshad' + str(max(1, round(w * .002))) + r'\yshad' + str(max(2, round(w * .0068)))
+            # Encolhe o grupo quando ele nao cabe em 86% da largura (fonte medida de verdade).
+            esc = 100
+            try:
+                from PIL import ImageFont
+                tam = round(w * .104 if h > w else h * .094)
+                fonte = ImageFont.truetype(str(FONTES / 'LilitaOne-Regular.ttf'), tam)
+                # 0.87: o libass desenha a fonte menor que o PIL no mesmo tamanho (medido).
+                largura = 0.87 * fonte.getlength(str(c['text']).replace('*', '').upper())
+                esc = min(100, round(100 * .86 * w / max(1, largura)))
+            except (ImportError, OSError):
+                pass
+            if c.get('entrada'):
+                entrada = (rf'\fscx{round(esc * .62)}\fscy{round(esc * .62)}\t(0,90,\fscx{round(esc * 1.12)}\fscy{round(esc * 1.12)})'
+                           rf'\t(90,180,\fscx{esc}\fscy{esc})')
+            else:
+                entrada = rf'\fscx{esc}\fscy{esc}'
+            animation = '{' + sombra + entrada + tag + '}'
             highlight = c.get('highlight', 'ouro')
         elif style == 'legenda':
             # Word-by-word captions: quick pop and no fade, so consecutive words feel snappy.

@@ -1,5 +1,12 @@
 # Validação antes da publicação
 
+## v1.5.0 (11 de outubro de 2026)
+
+- 23 testes passaram, incluindo legendas "uma ideia por vez" ("O VERMELHO," / "O AZUL..." / "OU O AMARELO GIGANTE?"; "ACHEI NA RUA," / "TODO ESSE OVO" / "PRA UM PINTINHO?!"), envelope da boca em áudio sintético e as APIs R15/auditorias.
+- Studio: as 17 animações dos pacotes (Cartoony, Levitation, emotes R15) carregaram no Play; alturas de pose medidas (idle 3,41; sentado com pernas esticadas 1,27; deitado 0,91).
+- Piloto refeito em R15: `[auditoria] total 0` e `[camera] total 0`; boca abrindo nas 9 falas; quadros revisados a cada 0,4 s; 1080×1920, 60 fps, −14,0 LUFS, pico −1,9 dBTP.
+
+
 ## v1.4.0 — auditoria de animação e legendas karaokê (11 de outubro de 2026)
 
 - 20 testes passaram (`python -m unittest discover -s tests`), incluindo agrupamento karaokê idêntico à referência ("MANO, OLHA O" / "TAMANHO DESSE OVO!"), fonte Fredoka One embutida e as APIs de auditoria do AnimKit.

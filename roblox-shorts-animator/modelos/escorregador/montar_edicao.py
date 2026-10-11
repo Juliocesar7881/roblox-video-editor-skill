@@ -81,7 +81,7 @@ def main():
     S.append(sfx('timpano', T['cortes_opcoes'][2] + 0.25))
     # "Escolhe rapido!" + contagem 5-4-3-2-1 com coracao acelerado.
     S.append(sfx('whoosh', ini['03'] - 0.05))
-    E.append({'type': 'shake', 'at': round(ini['03'] + 0.1, 3), 'duration': 0.3, 'intensity': 0.6})
+    # Sem tremida na contagem (pedido): so o zoom-soco leve em cada numero.
     c0 = T['contagem']
     S.append(sfx('coracao', c0, dur=5.0))
     for n in range(5):

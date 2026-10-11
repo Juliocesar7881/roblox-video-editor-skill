@@ -81,28 +81,60 @@ class Animator(unittest.TestCase):
         f = [{'id': '01', 'palavras': [{'w': w, 'start': i * .35, 'end': i * .35 + .3}
                                        for i, w in enumerate('Mano, olha o tamanho desse ovo!'.split())]}]
         caps = legendas_karaoke(f, {'01': 1.0})
-        self.assertEqual([c['text'] for c in caps[:4]],
-                         ['*MANO,* OLHA O', 'MANO, *OLHA* O', 'MANO, OLHA *O*', '*TAMANHO* DESSE OVO!'])
-        self.assertEqual([bool(c.get('entrada')) for c in caps], [True, False, False, True, False, False])
+        grupos = [c['text'].replace('*', '') for c in caps if c.get('entrada')]
+        self.assertEqual(grupos, ['MANO,', 'OLHA O TAMANHO', 'DESSE OVO!'])
+        self.assertEqual(caps[2]['text'], 'OLHA *O* TAMANHO')
         self.assertTrue(all(c['style'] == 'karaoke' for c in caps))
         self.assertTrue(all(a['end'] <= b['start'] + 1e-6 for a, b in zip(caps, caps[1:])))
 
     def test_karaoke_style_uses_bundled_font(self):
         from renderizar import make_ass, FONTES
-        self.assertTrue((FONTES / 'FredokaOne-Regular.ttf').is_file())
+        self.assertTrue((FONTES / 'LilitaOne-Regular.ttf').is_file())
         with tempfile.TemporaryDirectory() as td:
             p = Path(td) / 'k.ass'
             make_ass(p, [{'start': 0, 'end': 1, 'text': 'TAMANHO *DESSE* OVO!', 'style': 'karaoke', 'entrada': True}], 1080, 1920, 2, False)
             t = p.read_text(encoding='utf-8-sig')
-            self.assertIn('Style: karaoke,Fredoka One', t)
-            self.assertIn('&H0050E2FF&}DESSE', t)
-            self.assertIn('\fad(90,0)', t)
+            self.assertIn('Style: karaoke,Lilita One', t)
+            self.assertIn('&H004FE5FF&}DESSE', t)
+            self.assertIn(r'\yshad', t)
 
     def test_animkit_audits_and_hides_cursor(self):
         kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
         for api in ('function AnimKit.auditar', 'GetPartsInPart', 'MouseIconEnabled = false',
                     'model.PrimaryPart = model.HumanoidRootPart', 'function AnimKit.preCarregar', 'function AnimKit.sentarEm'):
             self.assertIn(api, kit)
+
+    def test_karaoke_one_idea_at_a_time(self):
+        ws = 'O vermelho, o azul... ou o amarelo gigante?'.split()
+        f = [{'id': '1', 'palavras': [{'w': w, 'start': i * .3, 'end': i * .3 + .25} for i, w in enumerate(ws)]}]
+        grupos = [c['text'].replace('*', '') for c in legendas_karaoke(f, {'1': 0}) if c.get('entrada')]
+        self.assertEqual(grupos, ['O VERMELHO,', 'O AZUL...', 'OU O AMARELO GIGANTE?'])
+        numeros = legendas_karaoke([{'id': '2', 'palavras': [{'w': '5,', 'start': 0, 'end': .3}, {'w': 'não!', 'start': .5, 'end': .8}]}], {'2': 0})
+        self.assertEqual([c['highlight'] for c in numeros], ['ciano', 'coral'])
+
+    @unittest.skipIf(ffmpeg_or_none() is None, 'FFmpeg indisponivel')
+    def test_mouth_envelope_follows_voice(self):
+        from envelope_boca import envelope
+        ff = ffmpeg_or_none()
+        with tempfile.TemporaryDirectory() as td:
+            wav = Path(td) / 'v.wav'
+            # 0,5 s de silencio, 0,5 s de "voz", 0,5 s de silencio.
+            subprocess.run([ff, '-v', 'error', '-y', '-f', 'lavfi', '-i',
+                            "aevalsrc='if(between(t,0.5,1),0.5*sin(2*PI*220*t),0)':d=1.5:s=16000", str(wav)], check=True)
+            env = envelope(wav, 30)
+            self.assertAlmostEqual(len(env), 45, delta=1)
+            self.assertTrue(all(c in '0123456789' for c in env))
+            self.assertLessEqual(max(map(int, env[:12])), 1)
+            self.assertGreaterEqual(min(map(int, env[18:27])), 7)
+            self.assertLessEqual(max(map(int, env[-10:])), 1)
+
+    def test_animkit_r15_pack_and_lipsync(self):
+        kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
+        for trecho in ('HumanoidRigType.R15', 'idle = 742637544', 'correr = 742638842', 'function AnimKit.falar',
+                       'function AnimKit.auditarCamera', 'function AnimKit.inserto', 'AnimationConstraint',
+                       'sentadoReto', 'HeadScale'):
+            self.assertIn(trecho, kit)
+        self.assertNotIn('__mode', kit)  # tabelas fracas perdiam animacoes e poses no Roblox
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@
   python gerar_cena.py            usa falas/falas.json (ElevenLabs)
   python gerar_cena.py --estimado tempos estimados pelo texto (ensaio sem voz)
 """
-import argparse, json, re
+import argparse, json, re, sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -67,19 +67,20 @@ def main():
 		K.anim(noob, "idle")
 		K.rosto(noob, "surpreso", 0)
 		K.olhar(noob, 0, -0.8, 0)
-		cam.rosto(noob, 4.8, 36, {altura = -0.6, queixo = 0.28})''')
-    E(0.6, '		cam.rosto(noob, 3.9, 34, {altura = -0.5, queixo = 0.28, t = 1.6})')
+		cam.rosto(noob, 4.8, 36, {altura = -0.6, queixo = 0.1})''')
+    E(0.6, '		cam.rosto(noob, 4.1, 34, {altura = -0.5, queixo = 0.1, t = 1.6})')
     # Fala 02: um corte por escorregador, no instante da palavra.
     E(ini['02'] - 0.05, '		K.rosto(noob, "duvida")')
-    E(cv, '		cam.corte(V(-14, 4.5, -11), V(-22, 6.5, 9), 58)\n		cam.mover(V(-15, 4.2, -9), V(-22, 6.5, 9), 1.1, 54)')
+    E(cv, '		K.inserto(true)\n		cam.corte(V(-14, 4.5, -11), V(-22, 6.5, 9), 58)\n		cam.mover(V(-15, 4.2, -9), V(-22, 6.5, 9), 1.1, 54)')
     E(ca, '		cam.corte(V(3, 6, -9), V(-6, 10, 22), 64)\n		cam.mover(V(3, 8, -7), V(-6, 12, 22), 1.2, 62)')
     E(cm, '		cam.corte(V(30, 3, -24), V(24, 10, 20), 58)\n		cam.mover(V(30, 5, -26), V(24, 50, 64), 1.6, 60)')
     # Fala 03 e contagem: noob grande na frente, os tres escorregadores atras.
-    E(ini['03'] - 0.05, '''		K.rosto(noob, "medo")
+    E(ini['03'] - 0.05, '''		K.inserto(false)
+		K.rosto(noob, "medo")
 		K.olhar(noob, 0, 0, 0.1)
 		cam.corte(V(0, 4.0, -19.2), V(0, 7.2, 10), 66)
 		cam.mover(V(0, 4.1, -18.2), V(0, 7.2, 10), 2.4, 64)''')
-    E(contagem, '		K.tremer(noob, 4.9, 0.06)')
+    # Sem tremedeira na contagem (pedido): a tensao vem do rosto e do olhar indo de um lado ao outro.
     for k in range(10):
         dx = -1 if k % 2 == 0 else 1
         E(contagem + k * 0.5 + 0.05, f'		K.olhar(noob, {dx}, -0.25, 0.1)')
@@ -92,15 +93,15 @@ def main():
 		K.anim(noob, "apontar", {loop = false})
 		cam.rosto(noob, 4.4, 38, {lado = 1.2, altura = -0.4})''')
     E(corrida, '''		K.mover(noob, V(-18.5, 0, -9.5), 1.1, "correr")
-		cam.seguir(raiz, V(7, 2.5, -8), 1.3)''')
+		cam.seguir(raiz, V(-7, 2.2, -5.5), 1.3)''')
     # No topo do vermelho: desce devagar ate travar.
     E(topo_vermelho, '''		K.sentarEm(noob, e1[1], V(0, 0, -1))
 		K.rosto(noob, "feliz")
 		K.deslizar(noob, meio1, 2.0)
-		cam.seguir(raiz, V(8, 2.2, -5), 2.3)''')
+		cam.seguir(noob.Head, V(4, 0.6, -7.5), 2.3)''')
     E(trava, '''		K.anim(noob, "sentar")
 		K.rosto(noob, "duvida")
-		cam.rosto(noob, 5.2, 38, {lado = 0.9, altura = 0.15, queixo = 0.3})''')
+		cam.rosto(noob, 5.4, 38, {lado = 0.9, altura = 0.15, queixo = 0.05})''')
     E(ini['05'] + 0.1, '		K.olhar(noob, 0.2, 0.9)')
     # Fala 06: o amarelo gigante.
     E(ini['06'] - 0.05, '''		raiz.CFrame = K.emPe(V(22.5, 0, -18), V(24.5, 0, -26))
@@ -112,31 +113,41 @@ def main():
     E(topo_amarelo, '''		K.sentarEm(noob, e3[1], V(0, 0, -1))
 		K.rosto(noob, "medo")
 		K.olhar(noob, 0, 1)
+		K.inserto(true)
 		cam.corte(e3[1] + V(2.5, 5.5, 7), e3[1] + V(0, -26, -42), 62)''')
-    E(ini['07'] - 0.15, '''		K.rosto(noob, "confiante")
+    E(ini['07'] - 0.15, '''		K.inserto(false)
+		K.rosto(noob, "confiante")
 		K.olhar(noob, 0, 0)
-		cam.rosto(noob, 4.4, 40, {lado = 1.3, altura = 0.1})''')
+		cam.rosto(noob, 4.6, 40, {lado = 1.3, altura = 0.1, queixo = 0.1})''')
     # Descida rapida, grito e voo com cambalhotas.
     # O voo comeca exatamente quando a descida termina (callback), sem duas animacoes brigando.
     E(descida, '''		local pouso = K.deitado(V(24, 0, -60), V(0, 0, 1))
 		K.deslizar(noob, e3, 2.2, nil, function()
-			K.voar(noob, pouso, 11, 1.6, 2, "cair", function()
+			K.voar(noob, pouso, 11, 1.6, 1, "cair", function()
 				for _, tr in ipairs(noob.Humanoid.Animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
 				raiz.CFrame = pouso
 				K.poeira(V(24, K.chao(V(24, 0, -60)) + 0.3, -60), 30)
 				K.rosto(noob, "apertado", 0.05)
 				cam.tremor(0.8, 0.5)
 			end)
-			cam.seguir(raiz, V(9.5, 2.5, 3.5), 1.6)
+			cam.seguir(noob.Head, V(6, 1.2, -8), 1.6)
 		end)
-		cam.seguir(raiz, V(9, 3.5, -8), 2.6)''')
+		cam.seguir(noob.Head, V(3.2, 1.2, -9), 2.6)''')
     E(ini['08'] - 0.1, '		K.rosto(noob, "grito")\n		K.olhar(noob, 0, 0)')
-    E(pouso + 0.05, '		cam.corte(V(33, 3, -50), V(24, 1.2, -60), 58)')
+    E(pouso + 0.05, '		cam.corte(V(27.2, 5, -56.4), V(24, 1.2, -60), 50)')
     E(pouso + 0.6, '''		K.rosto(noob, "tonto")
 		local c = noob.Head.Position
 		cam.corte(c + V(0, 5.2, -0.2), c, 40, V(0, 0, 1))
 		cam.mover(c + V(0, 4.3, -0.2), c, 2.2, 38, nil, V(0, 0, 1))''')
     E(ini['09'] + 0.2, '		K.olhar(noob, -0.4, 0.3)')
+
+    # Boca guiada pela voz real: um envelope por fala, comecando junto com o audio.
+    if not a.estimado:
+        sys.path.insert(0, str(Path.home() / '.claude' / 'skills' / 'roblox-shorts-animator' / 'scripts'))
+        from envelope_boca import envelope
+        for f in falas:
+            env = envelope(HERE / 'falas' / f['arquivo'])
+            E(ini[f['id']], f'		K.falar(noob, "{env}", 30)')
 
     lua = f'''-- Gerado por gerar_cena.py ({'estimado' if a.estimado else 'tempos do ElevenLabs'}). Duracao {fim:.2f}s.
 local RS = game:GetService("ReplicatedStorage")
@@ -153,7 +164,7 @@ for i = 1, 5 do meio1[i] = e1[i] end
 K.piscar(noob)
 K.preCarregar(noob)
 K.anim(noob, "idle", {{fade = 0}})
-''' + ('' if a.sem_auditoria else 'K.AUDITORIA_DETALHE = true\nK.auditar(noob)\n') + '''
+''' + ('' if a.sem_auditoria else 'K.AUDITORIA_DETALHE = true\nK.auditar(noob)\nK.auditarCamera(noob)\n') + '''
 K.rodar({''' + '''
 ''' + '\n'.join(ev) + f'''
 }}, {fim})

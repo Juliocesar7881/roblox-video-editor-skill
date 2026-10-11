@@ -46,24 +46,61 @@ def legendas_falas(falas, inicios, destaques=(), max_palavras=3, max_letras=16, 
 
 
 
-def legendas_karaoke(falas, inicios, max_palavras=3, max_letras=18, folga=0.15):
-    """Estilo dos Shorts de referencia: grupos de 2-3 palavras em branco com contorno escuro, e a
-    palavra que esta sendo falada em amarelo. Uma caption por palavra (mesmo grupo, destaque muda);
-    so a primeira de cada grupo tem 'entrada' (fade/pop rapido)."""
+FUNCAO = {'o', 'a', 'os', 'as', 'um', 'uma', 'de', 'do', 'da', 'dos', 'das', 'no', 'na', 'nos', 'nas', 'e', 'ou',
+          'que', 'em', 'pra', 'pro', 'com', 'por', 'se', 'eu', 'vou', 'é', 'tá', 'ta', 'mais', 'meu', 'minha'}
+
+
+def _norm_palavra(w):
+    return re.sub(r'[^\wÀ-ÿ]', '', w.lower())
+
+
+def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, pausa=0.28):
+    """Estilo dos Shorts de referencia, "de pouco em pouco": cada grupo e uma ideia curta (quebra em
+    virgula, reticencias, ? e !, e nunca termina em artigo/preposicao), some antes do proximo e,
+    nas pausas da fala, a tela fica sem legenda. Dentro do grupo a palavra falada fica amarela
+    (numeros em ciano, NAO em coral). Uma caption por palavra; so a primeira do grupo tem 'entrada'."""
+    def custo(pedaco):
+        letras = sum(len(x['w']) for x in pedaco) + len(pedaco) - 1
+        if len(pedaco) > max_palavras or (letras > max_letras and len(pedaco) > 1):
+            return float('inf')
+        c = 2.0 + 0.5 * (len(pedaco) - 3) ** 2  # prefere grupos de ~3 palavras e menos grupos
+        if len(pedaco) > 1 and _norm_palavra(pedaco[-1]['w']) in FUNCAO:
+            c += 10  # nunca terminar em "O", "NO", "OU"...
+        if all(_norm_palavra(x['w']) in FUNCAO for x in pedaco):
+            c += 10  # nem um grupo so de palavras de ligacao
+        return c
+
+    def dividir(frase):
+        # Programacao dinamica: melhor divisao da frase em pedacos validos.
+        n = len(frase)
+        melhor = [0.0] + [float('inf')] * n
+        corte = [0] * (n + 1)
+        for j in range(1, n + 1):
+            for i in range(max(0, j - max_palavras), j):
+                c = melhor[i] + custo(frase[i:j])
+                if c < melhor[j]:
+                    melhor[j], corte[j] = c, i
+        partes, j = [], n
+        while j > 0:
+            partes.insert(0, frase[corte[j]:j]); j = corte[j]
+        return partes
+
     caps = []
     for f in falas:
         base = inicios[f['id']]
         ws = f['palavras']
-        grupos, g = [], []
+        # 1) frases: quebram em pontuacao e nas pausas da fala; 2) frases longas viram pedacos.
+        frases, g = [], []
         for i, w in enumerate(ws):
-            letras = sum(len(x['w']) + 1 for x in g) + len(w['w'])
-            if g and (len(g) >= max_palavras or letras > max_letras):
-                grupos.append(g); g = []
             g.append(w)
-            if re.search(r'[.!?]$', w['w']) and i + 1 < len(ws):
-                grupos.append(g); g = []
+            prox = ws[i + 1] if i + 1 < len(ws) else None
+            pontuado = re.search(r'[,.!?…]$', w['w'])
+            pausou = prox is not None and prox['start'] - w['end'] > pausa
+            if prox is not None and (pontuado or pausou):
+                frases.append(g); g = []
         if g:
-            grupos.append(g)
+            frases.append(g)
+        grupos = [p for frase in frases for p in dividir(frase)]
         for gi, g in enumerate(grupos):
             fim_grupo = g[-1]['end'] + folga
             if gi + 1 < len(grupos):
@@ -72,8 +109,11 @@ def legendas_karaoke(falas, inicios, max_palavras=3, max_letras=18, folga=0.15):
                 ini = w['start']
                 fim = g[wi + 1]['start'] if wi + 1 < len(g) else fim_grupo
                 texto = ' '.join(f'*{x["w"].upper()}*' if xi == wi else x['w'].upper() for xi, x in enumerate(g))
+                ativa = _norm_palavra(w['w'])
+                cor = 'ciano' if re.search(r'\d', ativa) else 'coral' if ativa in ('não', 'nao') else 'ouro'
                 caps.append({'start': round(base + ini, 3), 'end': round(base + max(fim, ini + 0.08), 3),
-                             'text': texto, 'style': 'karaoke', **({'entrada': True} if wi == 0 else {})})
+                             'text': texto, 'style': 'karaoke', 'highlight': cor,
+                             **({'entrada': True} if wi == 0 else {})})
     return caps
 
 def badges():

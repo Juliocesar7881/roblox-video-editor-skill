@@ -12,10 +12,10 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
 AnimKit.VERTICAL = true
-AnimKit.ALTURA_RAIZ = 3 -- R6 em pe: centro do HumanoidRootPart acima da sola dos pes
-AnimKit.ALTURA_SENTADO = 1.9 -- R6 sentado: centro do HumanoidRootPart acima do assento (pernas da pose sentar descem um pouco)
-AnimKit.ELEVACAO_PASSO = 0.2 -- andar/correr: o pe da animacao R6 desce ate 0.26 abaixo do nivel parado
-AnimKit.ALTURA_DEITADO = 0.8 -- R6 deitado de costas: centro do tronco acima do chao (a cabeca grande e mais funda que o tronco)
+AnimKit.ALTURA_RAIZ = 3.41 -- R15 (Cartoony idle): centro do HumanoidRootPart acima da sola dos pes (medido)
+AnimKit.ALTURA_SENTADO = 1.32 -- R15 'sentar' + pose sentadoReto: centro do HumanoidRootPart acima do assento (medido 1.27)
+AnimKit.ELEVACAO_PASSO = { andar = -0.15, correr = -0.19 } -- Cartoony: o pe de apoio fica acima do nivel parado (medido)
+AnimKit.ALTURA_DEITADO = 0.95 -- R15 deitado de costas sem animacao: centro acima do chao (medido 0.91)
 AnimKit.ATRASO = 0.8 -- segundos entre o flash magenta e o t=0 da timeline
 AnimKit.FOV = 50 -- campo de visao HORIZONTAL do video vertical final, em graus
 
@@ -27,10 +27,14 @@ AnimKit.CORES = {
 }
 
 -- Animacoes R6 publicadas pela propria Roblox (livres para qualquer jogo).
+-- Rig R15 com os pacotes oficiais do Roblox (Cartoony para locomocao, Levitation para flutuar) e
+-- emotes R15 da Roblox. Todos publicados pela conta Roblox: tocam em qualquer place.
 AnimKit.ANIM = {
-	idle = 180435571, andar = 180426354, correr = 180426354, pular = 125750702, cair = 180436148,
-	escalar = 180436334, sentar = 178130996, acenar = 128777973, apontar = 128853357,
-	rir = 129423131, comemorar = 129423030, dancar = 182435998, dancar2 = 182436842, dancar3 = 182436935,
+	idle = 742637544, idle2 = 742638445, andar = 742640026, correr = 742638842, pular = 742637942,
+	cair = 742637151, escalar = 742636889, nadar = 742639220,
+	flutuar = 616006778, voarPose = 616013216, superpulo = 616115533,
+	sentar = 2506281703, acenar = 507770239, apontar = 507770453, rir = 507770818,
+	comemorar = 507770677, dancar = 507771019,
 }
 
 local function tween(obj, t, props, estilo, direcao)
@@ -63,10 +67,10 @@ end
 -- pretas sem brilho, sobrancelhas grossas, bochechas, gota de suor, olhos apertados (>_<) e bocas.
 -- Fica numa placa transparente soldada na frente da cabeca classica: uma SurfaceGui na propria
 -- cabeca ficaria escondida dentro da malha arredondada.
-AnimKit.CABECA = 1.45 -- escala da cabeca classica (1.25 = padrao do Roblox; as referencias usam cabeca maior)
-AnimKit.ROSTO_TAM = 1.2 -- largura/altura da placa do rosto com a cabeca padrao (studs)
-AnimKit.ROSTO_Y = 0.02 -- deslocamento vertical da placa em relacao ao centro da cabeca
-AnimKit.ROSTO_Z = 0.62 -- distancia da placa ao centro da cabeca, para a frente (cabeca padrao)
+AnimKit.CABECA = 1.3 -- fator sobre a cabeca classica R15 (as referencias usam cabeca maior)
+AnimKit.ROSTO_TAM = 0.84 -- placa do rosto, em fracao da largura da cabeca
+AnimKit.ROSTO_Y = 0.01 -- deslocamento vertical da placa, em fracao da altura da cabeca
+AnimKit.ROSTO_Z = 0.5 -- distancia da placa ao centro, em fracao da profundidade da cabeca
 
 local PRETO, BRANCO = Color3.new(0, 0, 0), Color3.new(1, 1, 1)
 local ROSA = Color3.fromRGB(255, 120, 140)
@@ -111,12 +115,17 @@ local function rostoGui(noob)
 	for _, d in ipairs(head:GetChildren()) do
 		if d:IsA("Decal") then d:Destroy() end
 	end
+	-- Cabecas R15 atuais trazem o rosto padrao na textura e controles faciais: sem textura e com os
+	-- controles em repouso, so o rosto de desenho aparece.
+	if head:IsA("MeshPart") then pcall(function() head.TextureID = "" end) end
+	local controles = head:FindFirstChildOfClass("FaceControls")
+	if controles then pcall(function() controles:Destroy() end) end
 	local velha = noob:FindFirstChild("RostoPlaca")
 	if velha then velha:Destroy() end
 	local placa = Instance.new("Part")
 	placa.Name = "RostoPlaca"
-	local k = AnimKit.CABECA / 1.25
-	placa.Size = Vector3.new(AnimKit.ROSTO_TAM * k, AnimKit.ROSTO_TAM * k, 0.05)
+	local tam = head.Size.X * AnimKit.ROSTO_TAM
+	placa.Size = Vector3.new(tam, tam, 0.05)
 	placa.Transparency = 1
 	placa.CanCollide = false
 	placa.CanQuery = false
@@ -124,7 +133,7 @@ local function rostoGui(noob)
 	placa.Massless = true
 	placa.CastShadow = false
 	placa.Anchored = false
-	placa.CFrame = head.CFrame * CFrame.new(0, AnimKit.ROSTO_Y * k, -AnimKit.ROSTO_Z * k)
+	placa.CFrame = head.CFrame * CFrame.new(0, AnimKit.ROSTO_Y * head.Size.Y, -AnimKit.ROSTO_Z * head.Size.Z - 0.01)
 	local solda = Instance.new("WeldConstraint")
 	solda.Part0 = head
 	solda.Part1 = placa
@@ -182,6 +191,12 @@ local function rostoGui(noob)
 			frame("Lingua", meia, ROSA, UDim2.fromScale(0.5, 0.86), UDim2.fromScale(0.55, 0.2), 5, true)
 		end
 	end
+	-- Boca de fala: abre e fecha guiada pelo volume da voz real (AnimKit.falar).
+	local fala = frame("fala", bocas, Color3.fromRGB(20, 8, 8), UDim2.fromScale(0.5, BOCA_Y), UDim2.fromScale(0.17, 0.035), 3, 0.45)
+	contorno(fala, 5)
+	fala.ClipsDescendants = true
+	frame("Lingua", fala, ROSA, UDim2.fromScale(0.5, 0.92), UDim2.fromScale(0.6, 0.42), 4, 0.5)
+	frame("Dentes", fala, BRANCO, UDim2.fromScale(0.5, 0.0), UDim2.fromScale(0.8, 0.3), 4, 0.3)
 	for _, b in ipairs(bocas:GetChildren()) do
 		b.Visible = b.Name == "reta"
 	end
@@ -244,13 +259,16 @@ function AnimKit.criarNoob(nome, cf, cores)
 	desc.TorsoColor = cores.camisa or AnimKit.CORES.camisa
 	desc.LeftLegColor = cores.calca or AnimKit.CORES.calca
 	desc.RightLegColor = cores.calca or AnimKit.CORES.calca
-	local model = Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R6)
+	local model = Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
 	model.Name = nome
 	for _, d in ipairs(model:GetDescendants()) do
 		if d:IsA("Shirt") or d:IsA("Pants") or d:IsA("ShirtGraphic") or d:IsA("Accessory") then
 			d:Destroy()
 		end
 	end
+	-- Cabeca classica maior: o Humanoid R15 reaplica a propria escala, entao usa o HeadScale dele.
+	local escala = model:FindFirstChildOfClass("Humanoid"):FindFirstChild("HeadScale")
+	if escala then escala.Value = AnimKit.CABECA end
 	local hum = model:FindFirstChildOfClass("Humanoid")
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
@@ -260,21 +278,18 @@ function AnimKit.criarNoob(nome, cf, cores)
 	local animate = model:FindFirstChild("Animate")
 	if animate then animate:Destroy() end
 	model.HumanoidRootPart.Anchored = true
-	local k = AnimKit.CABECA / 1.25
-	local malha = model.Head:FindFirstChildOfClass("SpecialMesh")
-	if malha then malha.Scale = Vector3.new(AnimKit.CABECA, AnimKit.CABECA, AnimKit.CABECA) end
-	local neck = model.Torso:FindFirstChild("Neck")
-	if neck then
-		-- A cabeca maior sobe junto, apoiada nos ombros.
-		neck.C1 = CFrame.new(0, -0.5 * k, 0) * (neck.C1 - neck.C1.Position)
-	end
 	-- O Roblox cria o rig com a CABECA como PrimaryPart: sem isto, PivotTo poe a cabeca no ponto
 	-- pedido e o corpo fica 1,5 stud enterrado no chao.
 	model.PrimaryPart = model.HumanoidRootPart
 	model.WorldPivot = model.HumanoidRootPart.CFrame
 	model:PivotTo(cf)
-	rostoGui(model)
+	-- O HeadScale so e aplicado depois que o modelo entra no mundo: o rosto e montado depois,
+	-- senao a placa fica do tamanho da cabeca antiga, escondida dentro da cabeca nova.
 	model.Parent = workspace
+	local t0 = os.clock()
+	while model.Head.Size.X < 1.16 * AnimKit.CABECA * 0.98 and os.clock() - t0 < 3 do task.wait() end
+	model:PivotTo(cf)
+	rostoGui(model)
 	return model
 end
 
@@ -465,10 +480,80 @@ function AnimKit.rosto(noob, expr, t)
 		local rot = lado == "E" and e.sobE or -(e.sobD or e.sobE)
 		tween(g["Sobrancelha" .. lado], t, { Rotation = rot, Position = UDim2.fromScale(x, topo - 0.075 + e.sobY) })
 	end
+	noob:SetAttribute("Expressao", expr)
+	local falando = (noob:GetAttribute("Falando") or 0) > 0
 	for _, b in ipairs(g.Bocas:GetChildren()) do
-		b.Visible = b.Name == e.boca
+		b.Visible = (falando and b.Name == "fala") or (not falando and b.Name == e.boca)
 	end
 	g.Suor.Visible = e.suor == true
+end
+
+-- Sincronia labial: env e uma string de digitos 0-9 (volume da voz, um por quadro a 'fps'),
+-- calculada do MP3 real da fala. Enquanto fala, a boca de fala substitui a da expressao.
+function AnimKit.falar(noob, env, fps, abertura)
+	fps = fps or 30
+	abertura = abertura or 1
+	local g = gui(noob)
+	local fala = g.Bocas.fala
+	local n = #env
+	noob:SetAttribute("Falando", (noob:GetAttribute("Falando") or 0) + 1)
+	for _, b in ipairs(g.Bocas:GetChildren()) do b.Visible = b.Name == "fala" end
+	local t0 = os.clock()
+	local con
+	con = RunService.RenderStepped:Connect(function()
+		local f = (os.clock() - t0) * fps
+		local i = math.floor(f) + 1
+		if i > n then
+			con:Disconnect()
+			noob:SetAttribute("Falando", math.max(0, (noob:GetAttribute("Falando") or 1) - 1))
+			if (noob:GetAttribute("Falando") or 0) == 0 then
+				AnimKit.rosto(noob, noob:GetAttribute("Expressao") or "normal", 0.08)
+			end
+			return
+		end
+		local a = (tonumber(env:sub(i, i)) or 0) / 9
+		local b = (tonumber(env:sub(i + 1, i + 1)) or 0) / 9
+		local v = a + (b - a) * (f % 1)
+		local open = math.clamp(v * 1.25, 0, 1) ^ 0.8 * abertura
+		fala.Size = UDim2.fromScale(0.15 + 0.09 * open, 0.03 + 0.21 * open)
+		fala.Position = UDim2.fromScale(0.5, BOCA_Y + 0.07 * open)
+	end)
+end
+
+-- Pose fixa por cima das animacoes (ex.: sentado com as pernas esticadas para a frente, para
+-- escorregar). juntas = { NomeDoMotor6D = CFrame } aplicado como Transform a cada quadro; as
+-- outras juntas continuam com a animacao que estiver tocando. nil remove.
+local poses = {} -- tabela forte: com chaves fracas o Roblox pode coletar o proxy da Instance e perder a entrada
+AnimKit.POSES = {
+	sentadoReto = {
+		LeftHip = CFrame.Angles(math.rad(90), 0, math.rad(-4)), RightHip = CFrame.Angles(math.rad(90), 0, math.rad(4)),
+		LeftKnee = CFrame.new(), RightKnee = CFrame.new(), LeftAnkle = CFrame.Angles(math.rad(-15), 0, 0), RightAnkle = CFrame.Angles(math.rad(-15), 0, 0),
+		LeftShoulder = CFrame.Angles(math.rad(25), 0, math.rad(-35)), RightShoulder = CFrame.Angles(math.rad(25), 0, math.rad(35)),
+	},
+	bracosPraCima = {
+		LeftShoulder = CFrame.Angles(math.rad(150), 0, math.rad(-20)), RightShoulder = CFrame.Angles(math.rad(150), 0, math.rad(20)),
+		LeftElbow = CFrame.Angles(math.rad(20), 0, 0), RightElbow = CFrame.Angles(math.rad(20), 0, 0),
+	},
+}
+-- No R15 o Humanoid recalcula o C0 de cada junta a partir do encaixe (RigAttachment) da peca de
+-- cima e o Animator so escreve Transform: a pose gira esse encaixe e a animacao continua por cima.
+local encOriginal = {} -- tabela forte: com chaves fracas o Roblox pode coletar o proxy da Instance e perder a entrada
+function AnimKit.pose(noob, nome)
+	local tabela = nome and (type(nome) == "table" and nome or AnimKit.POSES[nome]) or {}
+	for _, m in ipairs(noob:GetDescendants()) do
+		-- Rigs atuais usam AnimationConstraint (Attachment0 na peca de cima); os antigos, Motor6D.
+		local enc
+		if m:IsA("AnimationConstraint") then
+			enc = m.Attachment0
+		elseif m:IsA("Motor6D") and m.Part0 then
+			enc = m.Part0:FindFirstChild(m.Name .. "RigAttachment")
+		end
+		if enc then
+			encOriginal[enc] = encOriginal[enc] or enc.CFrame
+			enc.CFrame = tabela[m.Name] and encOriginal[enc] * tabela[m.Name] or encOriginal[enc]
+		end
+	end
+	poses[noob] = nome
 end
 
 -- Direcao do olhar: dx/dy de -1 a 1.
@@ -497,8 +582,11 @@ function AnimKit.piscar(noob)
 	end)
 end
 
-local cacheAnim = setmetatable({}, { __mode = "k" })
+local cacheAnim = {} -- tabela forte: com chaves fracas o Roblox pode coletar o proxy da Instance e perder a entrada
 function AnimKit.anim(noob, nome, opcoes)
+	opcoes = opcoes or {}
+	-- Pose fixa (ex.: pernas esticadas) so vale junto da animacao para a qual foi feita.
+	if nome ~= "sentar" and not opcoes.manterPose and poses[noob] then AnimKit.pose(noob, nil) end
 	opcoes = opcoes or {}
 	local animator = noob:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
 	cacheAnim[noob] = cacheAnim[noob] or {}
@@ -530,8 +618,7 @@ function AnimKit.mover(noob, destino, t, animNome)
 		local dir = (destino - r.Position) * Vector3.new(1, 0, 1)
 		destino = AnimKit.emPe(destino, destino + (dir.Magnitude > 0.01 and dir or r.CFrame.LookVector))
 	end
-	local passo = animNome == nil or animNome == "andar" or animNome == "correr"
-	local sobe = passo and AnimKit.ELEVACAO_PASSO or 0
+	local sobe = AnimKit.ELEVACAO_PASSO[animNome or "andar"] or 0
 	if animNome ~= false then AnimKit.anim(noob, animNome or "andar", { fade = 0.08 }) end
 	-- O ciclo de passada desce o pe abaixo do nivel parado: o corpo sobe um pouco enquanto anda.
 	r.CFrame = r.CFrame + Vector3.new(0, sobe, 0)
@@ -553,6 +640,7 @@ function AnimKit.deslizar(noob, pontos, t, anim, aoTerminar)
 	local total = 0
 	for i = 2, #pontos do total += (pontos[i] - pontos[i - 1]).Magnitude end
 	AnimKit.anim(noob, anim or "sentar", { fade = 0 })
+	if (anim or "sentar") == "sentar" then AnimKit.pose(noob, "sentadoReto") end
 	task.spawn(function()
 		-- Orientacao em cada ponto = bissetriz dos trechos vizinhos: o corpo ja chega inclinado certo
 		-- em cada dobra e as pernas acompanham a superficie.
@@ -562,12 +650,27 @@ function AnimKit.deslizar(noob, pontos, t, anim, aoTerminar)
 			local d = ((dentro or fora) + (fora or dentro)).Unit
 			return CFrame.lookAt(pontos[i], pontos[i] + d, normalDe(d))
 		end
-		for i = 2, #pontos do
-			local seg = (pontos[i] - pontos[i - 1]).Magnitude
-			local tw = tween(r, t * seg / total, { CFrame = cfPonto(i) }, Enum.EasingStyle.Linear)
-			tw.Completed:Wait()
-		end
-		if aoTerminar then aoTerminar() end
+		-- Guiado pelo relogio (nao por tweens encadeados): termina exatamente em t segundos, sem o
+		-- atraso de um quadro por trecho que deixava o pouso fora do tempo planejado.
+		local acum = { 0 }
+		for i = 2, #pontos do acum[i] = acum[i - 1] + (pontos[i] - pontos[i - 1]).Magnitude end
+		local cfs = {}
+		for i = 1, #pontos do cfs[i] = cfPonto(i) end
+		local t0 = os.clock()
+		local con
+		con = RunService.Heartbeat:Connect(function()
+			local k = math.clamp((os.clock() - t0) / t, 0, 1)
+			local d = k * total
+			local i = 2
+			while i < #pontos and acum[i] < d do i += 1 end
+			local seg = acum[i] - acum[i - 1]
+			local u = seg > 0 and (d - acum[i - 1]) / seg or 1
+			r.CFrame = cfs[i - 1]:Lerp(cfs[i], u)
+			if k >= 1 then
+				con:Disconnect()
+				if aoTerminar then aoTerminar() end
+			end
+		end)
 	end)
 end
 
@@ -576,6 +679,7 @@ end
 -- A pose sentada entra sem mistura: as pernas esticadas nunca aparecem atravessando o assento.
 function AnimKit.sentarEm(noob, ponto, frente)
 	AnimKit.anim(noob, "sentar", { fade = 0 })
+	AnimKit.pose(noob, "sentadoReto")
 	-- A pose so e aplicada no proximo quadro: espera um quadro antes de mover o corpo para o assento.
 	RunService.Heartbeat:Wait()
 	raiz(noob).CFrame = CFrame.lookAt(ponto, ponto + (frente or Vector3.new(0, 0, -1)))
@@ -624,13 +728,14 @@ function AnimKit.voar(noob, destino, altura, t, voltas, anim, aoPousar)
 		if final then
 			-- Cambalhotas so depois de ganhar altura (de 15% a 75% do voo).
 			local giro = math.clamp((k - 0.15) / 0.6, 0, 1)
-			rot = orient * CFrame.Angles(math.pi * 2 * (voltas or 0) * giro, 0, 0)
+			-- Rolamento em volta do eixo da frente: o rosto continua virado para a camera da frente.
+			rot = orient * CFrame.Angles(0, 0, math.pi * 2 * (voltas or 0) * giro)
 			if k > 0.75 then
 				local e = TweenService:GetValue((k - 0.75) / 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 				rot = rot:Lerp(final, e)
 			end
 		else
-			rot = orient * CFrame.Angles(math.pi * 2 * (voltas or 0) * k, 0, 0)
+			rot = orient * CFrame.Angles(0, 0, math.pi * 2 * (voltas or 0) * k)
 		end
 		r.CFrame = CFrame.new(p) * rot
 		if k >= 1 then
@@ -904,8 +1009,7 @@ function AnimKit.auditar(noob, folga)
 			local tam = parte.Size
 			if parte.Name == "Head" then
 				local m = parte:FindFirstChildOfClass("SpecialMesh")
-				local esc = m and m.Scale.X or 1.25
-				tam = Vector3.new(1, 1, 1) * 0.95 * esc
+				tam = m and Vector3.new(1, 1, 1) * 0.95 * m.Scale.X or parte.Size * 0.95
 			end
 			item.sonda.Size = Vector3.new(math.max(0.05, tam.X - 2 * folga), math.max(0.05, tam.Y - 2 * folga), math.max(0.05, tam.Z - 2 * folga))
 			item.sonda.CFrame = parte.CFrame
@@ -943,6 +1047,80 @@ function AnimKit.auditar(noob, folga)
 		end
 		print(string.format("[auditoria] total %d problema(s)", #achados))
 		pasta:Destroy()
+	end
+end
+
+-- Planos sem o protagonista (ex.: mostrar cada opcao) sao marcados como inserto: a auditoria de
+-- camera nao cobra rosto neles.
+function AnimKit.inserto(ligado)
+	AnimKit._inserto = ligado and true or false
+end
+
+-- Auditoria de camera (regra no 1: o rosto e o protagonista). 10 vezes por segundo mede a altura
+-- da cabeca na tela (fracao da altura do video vertical) e o angulo entre a camera e o olhar.
+-- Fora de insertos reporta: "rosto pequeno" (< minimo), "de costas" (> 100 graus), "de perfil"
+-- (> 60 graus por mais de 0,5 s) e "rosto fora do quadro".
+function AnimKit.auditarCamera(noob, minimo)
+	minimo = minimo or 0.08
+	local abertos, achados = {}, {}
+	local prox = 0
+	local con = RunService.Heartbeat:Connect(function()
+		local t = AnimKit.tempo()
+		if t < 0 or os.clock() < prox then return end
+		prox = os.clock() + 0.1
+		local agora = {}
+		if not AnimKit._inserto then
+			local cam = workspace.CurrentCamera
+			local h = noob.Head
+			local vp = cam.ViewportSize
+			local alto = AnimKit.VERTICAL and vp.X or vp.Y
+			local largo = AnimKit.VERTICAL and vp.Y or vp.X
+			local topo, okTopo = cam:WorldToViewportPoint((h.CFrame * CFrame.new(0, h.Size.Y / 2, 0)).Position)
+			local base, okBase = cam:WorldToViewportPoint((h.CFrame * CFrame.new(0, -h.Size.Y / 2, 0)).Position)
+			local centro, okCentro = cam:WorldToViewportPoint(h.Position)
+			-- Maior lado da cabeca na tela (altura ou largura): numa cambalhota/rolamento a cabeca fica
+			-- de lado e so a altura subestimaria o tamanho do rosto.
+			local esq = cam:WorldToViewportPoint((h.CFrame * CFrame.new(-h.Size.X / 2, 0, 0)).Position)
+			local dir = cam:WorldToViewportPoint((h.CFrame * CFrame.new(h.Size.X / 2, 0, 0)).Position)
+			local fracao = math.max((Vector2.new(topo.X, topo.Y) - Vector2.new(base.X, base.Y)).Magnitude,
+				(Vector2.new(esq.X, esq.Y) - Vector2.new(dir.X, dir.Y)).Magnitude) / alto
+			local paraCamera = (cam.CFrame.Position - h.Position).Unit
+			local ang = math.deg(math.acos(math.clamp(h.CFrame.LookVector:Dot(paraCamera), -1, 1)))
+			if not okCentro or centro.X < 0 or centro.Y < 0 or centro.X > vp.X or centro.Y > vp.Y then
+				agora["rosto fora do quadro"] = true
+			else
+				if fracao < minimo then agora[string.format("rosto pequeno (< %d%%)", minimo * 100)] = true end
+				if ang > 100 then agora["de costas"] = true elseif ang > 60 then agora["de perfil"] = true end
+			end
+			local _ = largo
+		end
+		for chave in pairs(agora) do
+			if not abertos[chave] then abertos[chave] = { t, t } else abertos[chave][2] = t end
+		end
+		for chave, faixa in pairs(abertos) do
+			if not agora[chave] then
+				achados[#achados + 1] = { chave = chave, a = faixa[1], b = faixa[2] }
+				abertos[chave] = nil
+			end
+		end
+	end)
+	local anterior = AnimKit._relatorio
+	AnimKit._relatorio = function()
+		if anterior then anterior() end
+		con:Disconnect()
+		for chave, faixa in pairs(abertos) do
+			achados[#achados + 1] = { chave = chave, a = faixa[1], b = faixa[2] }
+		end
+		table.sort(achados, function(x, y) return x.a < y.a end)
+		local n = 0
+		for _, f in ipairs(achados) do
+			-- Perfil curto (virar a cabeca) nao conta; costas e rosto fora contam sempre.
+			if not (f.chave == "de perfil" and f.b - f.a < 0.5) then
+				n += 1
+				print(string.format("[camera] %.2f-%.2fs %s", f.a, f.b, f.chave))
+			end
+		end
+		print(string.format("[camera] total %d problema(s)", n))
 	end
 end
 
