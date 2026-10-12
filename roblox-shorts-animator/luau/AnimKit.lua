@@ -711,6 +711,61 @@ function AnimKit.pose(noob, nome)
 	poses[noob] = nome
 end
 
+-- Gesto "six seven" (meme 67): cotovelos dobrados, antebracos para a frente com as palmas para
+-- cima, e as maos sobem e descem alternadas como uma balanca. Sincronize com a voz chamando
+-- uma vez por palavra: lado = 1 no "six" (mao esquerda sobe), -1 no "seven" (direita sobe),
+-- 0 maos niveladas; nil solta os bracos (volta a animacao). t: tempo da troca (0,12 s).
+-- As juntas do noob R15 sao AnimationConstraint: o gesto escreve Transform depois do Animator
+-- (Stepped) nas juntas dos bracos. Girar o encaixe (AnimKit.pose) quase nao move o braco.
+local gesto67 = {} -- tabela forte (mesmo motivo de 'poses')
+AnimKit.GESTO67 = { ombro = 10, ombroAmp = 20, cotovelo = 80, cotoveloAmp = 30 }
+local function transformSeisSete(s)
+	local g = AnimKit.GESTO67
+	local r = math.rad
+	return {
+		LeftShoulder = CFrame.Angles(r(g.ombro + g.ombroAmp * s), 0, 0),
+		RightShoulder = CFrame.Angles(r(g.ombro - g.ombroAmp * s), 0, 0),
+		LeftElbow = CFrame.Angles(r(g.cotovelo + g.cotoveloAmp * s), 0, 0),
+		RightElbow = CFrame.Angles(r(g.cotovelo - g.cotoveloAmp * s), 0, 0),
+		LeftWrist = CFrame.new(), RightWrist = CFrame.new(),
+	}
+end
+function AnimKit.sixSeven(noob, lado, t)
+	if lado == nil then
+		gesto67[noob] = nil
+		return
+	end
+	local g = gesto67[noob]
+	if not g then
+		g = { s = 0, juntas = {} }
+		for _, m in ipairs(noob:GetDescendants()) do
+			if (m:IsA("AnimationConstraint") or m:IsA("Motor6D")) and transformSeisSete(0)[m.Name] then g.juntas[m.Name] = m end
+		end
+		gesto67[noob] = g
+		g.de, g.t0, g.dur = 0, os.clock(), 0.01
+	else
+		g.de, g.t0, g.dur = g.s, os.clock(), t or 0.12
+	end
+	g.alvo = lado
+	if g.dur == 0.01 then g.dur = t or 0.12 end
+end
+if RunService:IsRunning() then
+	RunService.Stepped:Connect(function()
+		for noob, g in pairs(gesto67) do
+			if not noob.Parent then
+				gesto67[noob] = nil
+			else
+				local k = math.clamp((os.clock() - g.t0) / g.dur, 0, 1)
+				local e = TweenService:GetValue(k, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				g.s = g.de + (g.alvo - g.de) * e
+				for nome, cf in pairs(transformSeisSete(g.s)) do
+					if g.juntas[nome] then g.juntas[nome].Transform = cf end
+				end
+			end
+		end
+	end)
+end
+
 local cacheAnim = {} -- tabela forte: com chaves fracas o Roblox pode coletar o proxy da Instance e perder a entrada
 function AnimKit.anim(noob, nome, opcoes)
 	opcoes = opcoes or {}

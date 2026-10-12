@@ -132,6 +132,21 @@ def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, 
                              'text': ev['texto'], 'style': 'karaoke', 'highlight': ev['cor'],
                              **({'entrada': True} if ev['entrada'] else {}),
                              **({'saida': True} if ev['saida'] else {})})
+    # A sobra de uma frase (texto branco depois da ultima palavra) tambem nao atravessa um corte:
+    # termina no corte, e a frase seguinte entra no plano novo.
+    for c in caps:
+        corte = [x for x in cortes if c['start'] + 0.02 < x < c['end']]
+        if corte and c.get('saida'):
+            c['end'] = round(min(corte), 3)
+    # Sobra branca curta demais (< minimo) antes do corte pisca: o destaque anterior fica ate o fim.
+    caps.sort(key=lambda c: c['start'])
+    for i in range(len(caps) - 1, 0, -1):
+        c, ant = caps[i], caps[i - 1]
+        if (c.get('saida') and not c.get('entrada') and c['end'] - c['start'] < minimo
+                and abs(ant['end'] - c['start']) < 0.005 and not ant.get('saida')):
+            ant['end'] = c['end']
+            ant['saida'] = True
+            del caps[i]
     # Garantia final: nenhuma legenda invade a seguinte (duas ao mesmo tempo = linha duplicada).
     caps.sort(key=lambda c: c['start'])
     for a, b in zip(caps, caps[1:]):
