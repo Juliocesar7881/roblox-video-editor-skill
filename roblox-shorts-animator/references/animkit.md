@@ -38,6 +38,7 @@
 | `K.olhar(noob, dx, dy, t)` | Pupilas: −1 a 1. |
 | `K.piscar(noob)` | Piscadas automáticas: o olho (e a pupila) achata até quase fechar e volta em 0,16 s. |
 | `K.anim(noob, nome, {loop=, velocidade=, fade=, manter=})` | Pacote Cartoony (`idle`, `idle2`, `andar`, `correr`, `pular`, `cair`, `escalar`, `nadar`), Levitation (`flutuar`, `voarPose`, `superpulo`) e emotes R15 (`sentar`, `acenar`, `apontar`, `rir`, `comemorar`, `dancar`). `K.preCarregar(noob)` antes da cena. |
+| `K.sixSeven(noob, lado, t)` | Gesto "six seven" (meme 67): antebraços para a frente, mãos subindo e descendo alternadas. Chame uma vez por palavra, no início dela na voz: `1` no "six" (mão esquerda sobe), `-1` no "seven", `0` niveladas, `nil` solta os braços. Escreve `Transform` das juntas (AnimationConstraint) depois do Animator; girar o encaixe (`K.pose`) quase não move os braços do R15. Os tempos de "six"/"seven" do Whisper erram: meça o início de cada palavra no volume do áudio. |
 | `K.falar(noob, envelope, fps)` | Boca de fala guiada pelo volume real da voz (string de dígitos 0–9 por quadro, de `scripts/envelope_boca.py`): fechada + 3 ovais escuras altas com língua, como no vídeo de referência, cada uma por pelo menos 60 ms; sobrancelhas sobem na ênfase. |
 | `K.pose(noob, nome)` | Pose fixa por cima da animação girando os encaixes das juntas (`sentadoReto`, `bracosPraCima` ou tabela própria); `nil` desfaz. `K.sentarEm`/`K.deslizar` usam `sentadoReto`. |
 | `K.mover(noob, Vector3, t, anim)` | Anda/corre até o destino, com os pés no piso (a altura vem de `K.chao`). |

@@ -1,5 +1,12 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.11.0 — espanhol automático, gesto six seven e placas sem nada na frente
+- `scripts/fazer_bilingue.py PROJETO`: faz o Short nos dois idiomas numa rodada só (auditoria zerada, gravação com regravação se perder quadros, edição, revisão de legendas, render) e só termina com os dois MP4; `--so-conferir` acusa entrega sem o espanhol. O SKILL.md manda fazer o espanhol junto, sem esperar pedido.
+- `K.sixSeven(noob, lado)`: gesto "six seven" com as mãos, uma mão por palavra, sincronizado com a voz (Transform nas juntas depois do Animator).
+- Legendas: a sobra de uma frase termina no corte de câmera (não entra no plano seguinte nem num inserto) e sobra curta demais vira parte do destaque anterior.
+- `scripts/receptor_falas.py`: recebe os áudios da aba do ElevenLabs por uma página local quando o Chrome bloqueia vários downloads (sem mexer na configuração do navegador).
+- Modelo `modelos/aura-six-seven/` (porta VIP, medidor de aura, six seven): placa na frente das colunas, stickers fora da placa e do rosto, insertos do medidor e da porta abrindo.
+
 ## v1.10.0 — todo Short em português e espanhol
 - Regra fixa: todo Short sai em duas versões, português e espanhol, com a mesma voz (Roger); cada idioma com falas, gravação, legendas e publicação próprias.
 - `--idioma es` em `tts_elevenlabs.py`, `alinhar_falas.py`, `gerar_cena.py` e `montar_edicao.py` (pastas e arquivos `-es`); roteiro com `texto_es`, `titulo_es`, `arquivo_es`; legendas sabem as palavras de ligação do espanhol.

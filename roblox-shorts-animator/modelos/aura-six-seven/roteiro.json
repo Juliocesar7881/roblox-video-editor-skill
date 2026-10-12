@@ -1,0 +1,27 @@
+{
+  "titulo": "QUANTA AURA PRECISO PRA PASSAR POR ESSA PORTA?",
+  "titulo_es": "¿CUÁNTA AURA NECESITO PARA PASAR POR ESTA PUERTA?",
+  "idiomas": ["pt", "es"],
+  "arquivo": "quanta-aura-preciso-pra-passar-por-essa-porta.mp4",
+  "arquivo_es": "cuanta-aura-necesito-para-pasar-por-esta-puerta.mp4",
+  "vozes": {"noob": "Roger"},
+  "destaques": ["AURA", "PORTA", "PUERTA", "SIX", "SEVEN", "MIL"],
+  "falas": [
+    {"id": "01", "personagem": "noob", "texto": "Quanta aura eu preciso farmar pra passar por essa porta?", "texto_es": "¿Cuánta aura tengo que farmear para pasar por esta puerta?", "tag": "curious"},
+    {"id": "02", "personagem": "noob", "texto": "Mil de aura?! Fácil... é só fazer o six seven!", "texto_es": "¡¿Mil de aura?! Fácil... ¡solo hago el six seven!", "tag": "confident"},
+    {"id": "03", "personagem": "noob", "texto": "Six... seven!", "texto_es": "Six... seven!", "tag": "playful"},
+    {"id": "04", "personagem": "noob", "texto": "Six seven! Six seven! Six seven!", "texto_es": "Six seven! Six seven! Six seven!", "tag": "excited"},
+    {"id": "05", "personagem": "noob", "texto": "Novecentos e noventa e nove?!", "texto_es": "¡¿Novecientos noventa y nueve?!", "tag": "shocked"},
+    {"id": "06", "personagem": "noob", "texto": "Só mais um... SIX SEVEN!", "texto_es": "Solo uno más... ¡SIX SEVEN!", "tag": "shouting"},
+    {"id": "07", "personagem": "noob", "texto": "Aura máxima!", "texto_es": "¡Aura máxima!", "tag": "excited"}
+  ],
+  "planos": [
+    {"fala": "01", "camera": "close baixo no noob; corte na palavra porta para a porta VIP com a placa AURA >= 1000", "rosto": "surpreso"},
+    {"fala": "02", "camera": "insert do medidor em 0 no 'mil'; volta confiante", "rosto": "confiante"},
+    {"fala": "03", "camera": "medio de frente: six seven lento, uma mao por palavra", "rosto": "confiante", "acao": "medidor 0 -> 67"},
+    {"fala": "04", "camera": "um corte por six seven (frente, lado, baixo), aura roxa crescendo", "rosto": "festa", "acao": "medidor sobe ate 999"},
+    {"fala": "05", "camera": "close", "rosto": "grito", "acao": "medidor travado em 999, gota de suor"},
+    {"fala": "06", "camera": "close -> soco no SIX SEVEN final", "rosto": "bravo -> festa", "acao": "aura dourada, medidor infinito, porta abre sozinha"},
+    {"fala": "07", "camera": "de frente na porta aberta", "rosto": "feliz", "acao": "comemora e entra"}
+  ]
+}
