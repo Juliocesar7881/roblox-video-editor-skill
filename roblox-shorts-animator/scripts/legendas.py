@@ -47,7 +47,9 @@ def legendas_falas(falas, inicios, destaques=(), max_palavras=3, max_letras=16, 
 
 
 FUNCAO = {'o', 'a', 'os', 'as', 'um', 'uma', 'de', 'do', 'da', 'dos', 'das', 'no', 'na', 'nos', 'nas', 'e', 'ou',
-          'que', 'em', 'pra', 'pro', 'com', 'por', 'se', 'eu', 'vou', 'é', 'tá', 'ta', 'mais', 'meu', 'minha'}
+          'que', 'em', 'pra', 'pro', 'com', 'por', 'se', 'eu', 'vou', 'é', 'tá', 'ta', 'mais', 'meu', 'minha',
+          # espanhol (versao ES de todo Short)
+          'el', 'la', 'los', 'las', 'un', 'una', 'del', 'al', 'y', 'en', 'con', 'me', 'mi', 'es', 'más', 'voy', 'muy'}
 
 
 def _norm_palavra(w):
@@ -175,7 +177,7 @@ def _eventos_do_grupo(g, fim_grupo, minimo, pausa_destaque):
         palavras = [_norm_palavra(g[i]['w']) for i in u]
         if any(re.search(r'\d', p) for p in palavras):
             return 'ciano'
-        if any(p in ('não', 'nao') for p in palavras):
+        if any(p in ('não', 'nao') for p in palavras):  # 'no' fica fora: em portugues e "no" de "vou no"
             return 'coral'
         return 'ouro'
 

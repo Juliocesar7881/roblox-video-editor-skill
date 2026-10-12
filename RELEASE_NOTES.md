@@ -1,5 +1,9 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.10.0 — todo Short em português e espanhol
+- Regra fixa: todo Short sai em duas versões, português e espanhol, com a mesma voz (Roger); cada idioma com falas, gravação, legendas e publicação próprias.
+- `--idioma es` em `tts_elevenlabs.py`, `alinhar_falas.py`, `gerar_cena.py` e `montar_edicao.py` (pastas e arquivos `-es`); roteiro com `texto_es`, `titulo_es`, `arquivo_es`; legendas sabem as palavras de ligação do espanhol.
+
 ## v1.9.0 — rosto idêntico ao Short de referência e legenda esperando o corte
 - Rosto refeito a partir do Short de referência do cliente ("O CHÃO VIROU LAVA NO ROBLOX", BRUNOBLOX): olhos ovais altos quase encostando, branco creme, pupila estreita com brilho, sobrancelhas grossas inclinadas, suor ciano ao lado do olho; bocas como no vídeo (oval preta alta com língua ao falar/gritar, traço branco no neutro, boca aberta com dentes na alegria, olhos X no nocaute). As caretas da v1.8 saíram; os nomes delas viraram apelidos.
 - Legenda: o corte para a opção volta para a palavra ("amarelo") e a frase que começa antes ("ou o amarelo gigante?") só aparece no corte, com a tela sem legenda até o escorregador aparecer.

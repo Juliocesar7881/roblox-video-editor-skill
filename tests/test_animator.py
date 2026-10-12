@@ -310,6 +310,19 @@ class Animator(unittest.TestCase):
         self.assertIn('- K.tempo()', modelo)  # descida e voo terminam no tempo da timeline
         self.assertNotIn('tr:Stop(0) end', modelo)  # parar tudo deixava o noob deitado em pose T
 
+    def test_every_short_is_bilingual(self):
+        # Pedido fixo do usuario: toda entrega em portugues e espanhol, mesma voz.
+        modelo = ANIM / 'modelos' / 'escorregador'
+        rot = json.loads((modelo / 'roteiro.json').read_text(encoding='utf-8'))
+        self.assertEqual(rot['idiomas'], ['pt', 'es'])
+        self.assertTrue(rot['titulo_es'] and rot['arquivo_es'])
+        self.assertTrue(all(f.get('texto_es') for f in rot['falas']))
+        for arq in ('gerar_cena.py', 'montar_edicao.py'):
+            self.assertIn("'--idioma'", (modelo / arq).read_text(encoding='utf-8'))
+        for arq in ('tts_elevenlabs.py', 'alinhar_falas.py'):
+            self.assertIn("'--idioma'", (ANIM / 'scripts' / arq).read_text(encoding='utf-8'))
+        self.assertIn('Sempre duas versões: português e espanhol', (ANIM / 'SKILL.md').read_text(encoding='utf-8'))
+
     def test_animkit_r15_pack_and_lipsync(self):
         kit = (ANIM / 'luau' / 'AnimKit.lua').read_text(encoding='utf-8')
         for trecho in ('HumanoidRigType.R15', 'idle = 742637544', 'correr = 742638842', 'function AnimKit.falar',

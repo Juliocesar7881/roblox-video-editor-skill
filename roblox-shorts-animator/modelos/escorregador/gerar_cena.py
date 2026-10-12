@@ -32,9 +32,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--estimado', action='store_true')
     ap.add_argument('--sem-auditoria', action='store_true', help='gravacao final: sem o custo da auditoria')
+    ap.add_argument('--idioma', default='pt', help='pt ou es: falas-<idioma>/, studio/cena-<idioma>.lua, tempos-<idioma>.json')
     a = ap.parse_args()
     roteiro = json.loads((HERE / 'roteiro.json').read_text(encoding='utf-8'))
-    falas = estimar(roteiro) if a.estimado else json.loads((HERE / 'falas' / 'falas.json').read_text(encoding='utf-8'))
+    suf = '' if a.idioma == 'pt' else f'-{a.idioma}'
+    falas = estimar(roteiro) if a.estimado else json.loads((HERE / f'falas{suf}' / 'falas.json').read_text(encoding='utf-8'))
     F = {f['id']: f for f in falas}
     ini = {}
     t = 0.3
@@ -56,9 +58,10 @@ def main():
     pouso = voo + 1.6
     ini['09'] = max(pouso + 0.75, ini['08'] + F['08']['duracao'] + 0.2); t = ini['09'] + F['09']['duracao']
     fim = round(t + 0.6, 3)
-    cv = ini['02'] + palavra(F['02'], 'vermelho') - 0.05
-    ca = ini['02'] + palavra(F['02'], 'azul') - 0.05
-    cm = ini['02'] + palavra(F['02'], 'amarelo') - 0.05
+    cor = {'pt': ('vermelho', 'azul', 'amarelo'), 'es': ('rojo', 'azul', 'amarillo')}[a.idioma]
+    cv = ini['02'] + palavra(F['02'], cor[0]) - 0.05
+    ca = ini['02'] + palavra(F['02'], cor[1]) - 0.05
+    cm = ini['02'] + palavra(F['02'], cor[2]) - 0.05
 
     ev = []
     E = lambda t, corpo: ev.append(f'\t{{t = {t:.3f}, f = function()\n{corpo}\n\tend}},')
@@ -154,7 +157,7 @@ def main():
         sys.path.insert(0, str(Path.home() / '.claude' / 'skills' / 'roblox-shorts-animator' / 'scripts'))
         from envelope_boca import envelope
         for f in falas:
-            env = envelope(HERE / 'falas' / f['arquivo'])
+            env = envelope(HERE / f'falas{suf}' / f['arquivo'])
             E(ini[f['id']], f'		K.falar(noob, "{env}", 30)')
 
     lua = f'''-- Gerado por gerar_cena.py ({'estimado' if a.estimado else 'tempos do ElevenLabs'}). Duracao {fim:.2f}s.
@@ -178,11 +181,11 @@ K.rodar({''' + '''
 ''' + '\n'.join(ev) + f'''
 }}, {fim})
 '''
-    (HERE / 'studio' / 'cena.lua').write_text(lua, encoding='utf-8')
+    (HERE / 'studio' / f'cena{suf}.lua').write_text(lua, encoding='utf-8')
     tempos = {'falas': ini, 'contagem': contagem, 'trava': trava, 'pouso': pouso, 'voo': voo,
               'descida': descida, 'topo_vermelho': topo_vermelho, 'topo_amarelo': topo_amarelo,
               'corrida': corrida, 'cortes_opcoes': [cv, ca, cm], 'fim': fim, 'estimado': a.estimado}
-    (HERE / 'tempos.json').write_text(json.dumps(tempos, indent=1), encoding='utf-8')
+    (HERE / f'tempos{suf}.json').write_text(json.dumps(tempos, indent=1), encoding='utf-8')
     print(json.dumps({k: (round(v, 2) if isinstance(v, float) else v) for k, v in tempos.items() if k != 'falas'}))
 
 

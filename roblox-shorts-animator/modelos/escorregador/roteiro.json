@@ -1,27 +1,135 @@
 {
   "titulo": "QUAL ESCORREGADOR É O MAIS RÁPIDO?",
-  "vozes": {"noob": "Roger"},
-  "destaques": ["MAIS RÁPIDO", "VERMELHO", "AZUL", "AMARELO", "GIGANTE", "RÁPIDO", "TRAVEI", "AAAAAH"],
+  "titulo_es": "¿CUÁL TOBOGÁN ES EL MÁS RÁPIDO?",
+  "idiomas": [
+    "pt",
+    "es"
+  ],
+  "arquivo": "qual-escorregador-e-o-mais-rapido.mp4",
+  "arquivo_es": "cual-tobogan-es-el-mas-rapido.mp4",
+  "vozes": {
+    "noob": "Roger"
+  },
+  "destaques": [
+    "MAIS RÁPIDO",
+    "VERMELHO",
+    "AZUL",
+    "AMARELO",
+    "GIGANTE",
+    "RÁPIDO",
+    "TRAVEI",
+    "AAAAAH"
+  ],
   "falas": [
-    {"id": "01", "personagem": "noob", "texto": "Qual escorregador é o mais rápido?"},
-    {"id": "02", "personagem": "noob", "texto": "O vermelho, o azul... ou o amarelo gigante?"},
-    {"id": "03", "personagem": "noob", "texto": "Escolhe rápido!"},
-    {"id": "04", "personagem": "noob", "texto": "Vou no vermelho! É o mais curtinho!"},
-    {"id": "05", "personagem": "noob", "texto": "Ué... travei?"},
-    {"id": "06", "personagem": "noob", "texto": "Tá bom, vou no amarelo então."},
-    {"id": "07", "personagem": "noob", "texto": "Agora vai!"},
-    {"id": "08", "personagem": "noob", "texto": "Aaaaaah!"},
-    {"id": "09", "personagem": "noob", "texto": "Pelo menos foi rápido..."}
+    {
+      "id": "01",
+      "personagem": "noob",
+      "texto": "Qual escorregador é o mais rápido?",
+      "texto_es": "¿Cuál tobogán es el más rápido?"
+    },
+    {
+      "id": "02",
+      "personagem": "noob",
+      "texto": "O vermelho, o azul... ou o amarelo gigante?",
+      "texto_es": "El rojo, el azul... ¿o el amarillo gigante?"
+    },
+    {
+      "id": "03",
+      "personagem": "noob",
+      "texto": "Escolhe rápido!",
+      "texto_es": "¡Elige rápido!"
+    },
+    {
+      "id": "04",
+      "personagem": "noob",
+      "texto": "Vou no vermelho! É o mais curtinho!",
+      "texto_es": "¡Voy al rojo! ¡Es el más cortito!"
+    },
+    {
+      "id": "05",
+      "personagem": "noob",
+      "texto": "Ué... travei?",
+      "texto_es": "¿Eh...? ¿Me atoré?"
+    },
+    {
+      "id": "06",
+      "personagem": "noob",
+      "texto": "Tá bom, vou no amarelo então.",
+      "texto_es": "Bueno, entonces voy al amarillo."
+    },
+    {
+      "id": "07",
+      "personagem": "noob",
+      "texto": "Agora vai!",
+      "texto_es": "¡Ahora sí!"
+    },
+    {
+      "id": "08",
+      "personagem": "noob",
+      "texto": "Aaaaaah!",
+      "texto_es": "¡Aaaaaah!"
+    },
+    {
+      "id": "09",
+      "personagem": "noob",
+      "texto": "Pelo menos foi rápido...",
+      "texto_es": "Al menos fue rápido..."
+    }
   ],
   "planos": [
-    {"fala": "01", "camera": "close baixo no noob, escorregadores ao fundo", "rosto": "surpreso", "acao": "olha para cima"},
-    {"fala": "02", "camera": "um corte por escorregador: vermelho curto e reto, azul em espiral, amarelo altissimo (travelling subindo)", "rosto": "duvida", "acao": "pupilas seguem cada um"},
-    {"fala": "03", "camera": "plano aberto com os tres, placas 1-2-3", "rosto": "medo", "acao": "treme e suor; contagem 5-4-3-2-1 na edicao"},
-    {"fala": "04", "camera": "medio lateral acompanhando a corrida", "rosto": "confiante", "acao": "corre ate o vermelho e sobe"},
-    {"fala": "05", "camera": "close no noob parado no meio da rampa vermelha", "rosto": "duvida", "acao": "desliza devagar e para no meio; pisca"},
-    {"fala": "06", "camera": "baixo, olhando a escada gigante do amarelo", "rosto": "medo", "acao": "sobe a escada (corte com elipse)"},
-    {"fala": "07", "camera": "topo do amarelo, cidade la embaixo", "rosto": "confiante", "acao": "senta e empurra"},
-    {"fala": "08", "camera": "segue a descida em alta velocidade; no fim ele voa em arco com cambalhotas", "rosto": "medo", "acao": "voa longe"},
-    {"fala": "09", "camera": "close dele de cara no chao / caido", "rosto": "tonto", "acao": "estrelas de tontura na edicao; corte seco"}
+    {
+      "fala": "01",
+      "camera": "close baixo no noob, escorregadores ao fundo",
+      "rosto": "surpreso",
+      "acao": "olha para cima"
+    },
+    {
+      "fala": "02",
+      "camera": "um corte por escorregador: vermelho curto e reto, azul em espiral, amarelo altissimo (travelling subindo)",
+      "rosto": "duvida",
+      "acao": "pupilas seguem cada um"
+    },
+    {
+      "fala": "03",
+      "camera": "plano aberto com os tres, placas 1-2-3",
+      "rosto": "medo",
+      "acao": "treme e suor; contagem 5-4-3-2-1 na edicao"
+    },
+    {
+      "fala": "04",
+      "camera": "medio lateral acompanhando a corrida",
+      "rosto": "confiante",
+      "acao": "corre ate o vermelho e sobe"
+    },
+    {
+      "fala": "05",
+      "camera": "close no noob parado no meio da rampa vermelha",
+      "rosto": "duvida",
+      "acao": "desliza devagar e para no meio; pisca"
+    },
+    {
+      "fala": "06",
+      "camera": "baixo, olhando a escada gigante do amarelo",
+      "rosto": "medo",
+      "acao": "sobe a escada (corte com elipse)"
+    },
+    {
+      "fala": "07",
+      "camera": "topo do amarelo, cidade la embaixo",
+      "rosto": "confiante",
+      "acao": "senta e empurra"
+    },
+    {
+      "fala": "08",
+      "camera": "segue a descida em alta velocidade; no fim ele voa em arco com cambalhotas",
+      "rosto": "medo",
+      "acao": "voa longe"
+    },
+    {
+      "fala": "09",
+      "camera": "close dele de cara no chao / caido",
+      "rosto": "tonto",
+      "acao": "estrelas de tontura na edicao; corte seco"
+    }
   ]
 }

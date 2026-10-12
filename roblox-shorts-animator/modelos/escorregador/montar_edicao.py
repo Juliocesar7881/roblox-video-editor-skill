@@ -61,11 +61,17 @@ def main():
     ap.add_argument('--previa', action='store_true')
     ap.add_argument('--cena', default='cena.mp4')
     ap.add_argument('--saida', default='timeline-edicao.json')
-    ap.add_argument('--nome', default='qual-escorregador-e-o-mais-rapido.mp4')
+    ap.add_argument('--nome', default=None)
+    ap.add_argument('--idioma', default='pt', help='pt ou es: falas-es/, tempos-es.json, cena-es.mp4, timeline-edicao-es.json')
     a = ap.parse_args()
     roteiro = json.loads((HERE / 'roteiro.json').read_text(encoding='utf-8'))
-    T = json.loads((HERE / 'tempos.json').read_text(encoding='utf-8'))
-    falas = estimar(roteiro) if a.estimado else json.loads((HERE / 'falas' / 'falas.json').read_text(encoding='utf-8'))
+    suf = '' if a.idioma == 'pt' else f'-{a.idioma}'
+    if suf:
+        a.cena = a.cena if a.cena != 'cena.mp4' else f'cena{suf}.mp4'
+        a.saida = a.saida if a.saida != 'timeline-edicao.json' else f'timeline-edicao{suf}.json'
+    a.nome = a.nome or roteiro.get('arquivo' if a.idioma == 'pt' else f'arquivo_{a.idioma}', 'short' + suf + '.mp4')
+    T = json.loads((HERE / f'tempos{suf}.json').read_text(encoding='utf-8'))
+    falas = estimar(roteiro) if a.estimado else json.loads((HERE / f'falas{suf}' / 'falas.json').read_text(encoding='utf-8'))
     F = {f['id']: f for f in falas}
     ini = T['falas']
     fim = T['fim']
@@ -79,7 +85,7 @@ def main():
         if c['start'] < c0 < c['end']:
             c['end'] = round(c0, 3)
             c['saida'] = True
-    voice = [] if a.estimado else [{'file': f'falas/{F[i]["arquivo"]}', 'at': round(ini[i], 3), 'gain_db': 0} for i in ini]
+    voice = [] if a.estimado else [{'file': f'falas{suf}/{F[i]["arquivo"]}', 'at': round(ini[i], 3), 'gain_db': 0} for i in ini]
     S, E, O = [], [], []
 
     # Gancho: pop na entrada e zoom-soco na palavra "rapido".

@@ -24,10 +24,13 @@ def main():
     ap.add_argument('pasta', type=Path)
     ap.add_argument('--modelo', default='small')
     ap.add_argument('--voz', default='Roger (ElevenLabs)')
+    ap.add_argument('--idioma', default=None, help='pt (padrao) ou es: usa texto_es e transcreve em espanhol')
     a = ap.parse_args()
     import numpy as np
     from faster_whisper import WhisperModel
     rot = json.loads(a.roteiro.read_text(encoding='utf-8'))
+    idioma = a.idioma or rot.get('idioma', 'pt')
+    chave = 'texto' if idioma == 'pt' else f'texto_{idioma}'
     model = WhisperModel(a.modelo, device='cpu', compute_type='int8')
     ff = ffmpeg()
     out, avisos = [], []
@@ -38,9 +41,9 @@ def main():
         raw = subprocess.run([ff, '-v', 'error', '-i', str(mp3), '-f', 'f32le', '-ac', '1', '-ar', '16000', '-'],
                              capture_output=True, check=True).stdout
         audio = np.frombuffer(raw, np.float32)
-        segs, _ = model.transcribe(audio, language=rot.get('idioma', 'pt'), word_timestamps=True, vad_filter=False)
+        segs, _ = model.transcribe(audio, language=idioma, word_timestamps=True, vad_filter=False)
         ws = [{'w': w.word.strip(), 'start': round(w.start, 3), 'end': round(w.end, 3)} for s in segs for w in s.words]
-        texto = re.sub(r'\[[^\]]*\]', '', f['texto']).strip()
+        texto = re.sub(r'\[[^\]]*\]', '', f[chave]).strip()
         tokens = texto.split()
         ouvido = ' '.join(w['w'] for w in ws)
         sim = difflib.SequenceMatcher(None, norm(texto), norm(ouvido)).ratio()

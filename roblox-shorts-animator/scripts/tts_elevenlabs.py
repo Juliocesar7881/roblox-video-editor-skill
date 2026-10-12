@@ -55,6 +55,7 @@ def main():
     ap.add_argument('--out', type=Path, required=True, help='pasta das falas (mp3 + falas.json)')
     ap.add_argument('--modelo', default='eleven_multilingual_v2')
     ap.add_argument('--listar-vozes', action='store_true')
+    ap.add_argument('--idioma', default='pt', help='pt usa "texto"; outro idioma usa "texto_<idioma>" (ex.: texto_es), mesma voz')
     args = ap.parse_args()
     key = os.environ.get('ELEVENLABS_API_KEY')
     if not key and sys.platform == 'win32':
@@ -76,7 +77,9 @@ def main():
     voice_ids = {p: resolve_voice(n, key) for p, n in spec['vozes'].items()}
     settings = spec.get('voice_settings', {'stability': 0.35, 'similarity_boost': 0.8, 'style': 0.45, 'use_speaker_boost': True})
     result = []
+    chave = 'texto' if args.idioma == 'pt' else f'texto_{args.idioma}'
     for fala in spec['falas']:
+        fala = dict(fala, texto=fala[chave])
         vid, vname = voice_ids[fala['personagem']]
         dest = args.out / f'fala-{fala["id"]}.mp3'
         meta = args.out / f'fala-{fala["id"]}.json'
