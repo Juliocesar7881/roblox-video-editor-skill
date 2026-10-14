@@ -1,5 +1,12 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.12.0 — lote semanal: 10 Shorts em PT e ES e agendamento no YouTube
+- Nova skill `roblox-shorts-batch`: lote de 10 histórias inéditas (histórico de todos os Shorts para não repetir, eixos e formatos variados, muitas cores), cada uma produzida em português e espanhol pela `roblox-shorts-animator` (`lote.py produzir` roda o `fazer_bilingue.py` de cada projeto e segue mesmo se um falhar).
+- Metadados do YouTube validados por vídeo e idioma (`lote.py metadados`): título com `#shorts`, descrição, hashtags, créditos da música e da voz, tags dentro do limite, "feito para crianças".
+- `lote.py agenda`: canal PT e canal ES, 2 vídeos por dia (12:15 e 17:15, Brasília) nos próximos 5 dias; `lote.py painel` gera `revisao.html` com os 20 vídeos para revisar.
+- Quando o usuário diz "agende": agendamento no YouTube Studio pelo Chrome dele (passo a passo em `references/youtube-studio.md`), com `lote.py marcar`/`status`; alternativa pela YouTube Data API (`youtube_api.py`, `private` + `publishAt`).
+- Legendas: corte nos últimos instantes de uma frase não deixa mais um pedaço de 50 ms piscando.
+
 ## v1.11.1 — originalidade obrigatória e gravação mais robusta
 - Todo vídeo novo com ideia e roteiro inéditos: consultar o histórico em `entregas/`, registrar `originalidade.json` e usar os modelos só como infraestrutura (SKILL.md das duas skills).
 - Gravação: guarda de tempo no flash final (objetos magenta do cenário não encerram a captura antes da hora); `studio_runscript.py` lê a saída do Studio direto do processo, com o arquivo como reserva.

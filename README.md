@@ -82,3 +82,6 @@ python -m unittest discover -s tests
 ```
 
 Código e instruções: [MIT](LICENSE). As músicas licenciadas usam CC BY 4.0; arquivos fornecidos têm licença pendente, conforme [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Os efeitos e stickers originais podem ser usados comercialmente sem atribuição obrigatória.
+
+## roblox-shorts-batch
+Lote semanal: 10 Shorts inéditos em português e espanhol, com título, descrição e tags para o YouTube, painel de revisão e agendamento (canal PT e canal ES, 12:15 e 17:15, próximos 5 dias) no YouTube Studio quando você disser "agende". Veja `roblox-shorts-batch/SKILL.md`.

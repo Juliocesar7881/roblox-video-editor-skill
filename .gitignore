@@ -9,3 +9,6 @@ entregas/
 *.mkv
 *.wav
 *.zip
+
+roblox-shorts-batch/credentials/
+roblox-shorts-batch/config.local.json
