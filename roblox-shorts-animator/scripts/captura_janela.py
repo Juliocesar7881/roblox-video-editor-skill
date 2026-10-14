@@ -101,7 +101,11 @@ class Gravador:
         if buf.shape[0] < y1 or buf.shape[1] < x1:
             return  # janela redimensionada no meio da gravacao: ignora o quadro
         crop = buf[y0:y1, x0:x1]
-        if not self.flash2_visto and agora - self.t_flash1 > 2.0 and magenta_mask(crop[::10, ::10]).mean() > 0.6:
+        # Guarda temporal: ignora magenta antes de 80% da duração esperada para evitar
+        # falso positivo com objetos magenta do cenário (ex: poção perto da câmera).
+        duracao_esperada = getattr(self, 'duracao_esperada', None)
+        tempo_minimo = (duracao_esperada * 0.8) if duracao_esperada else 2.0
+        if not self.flash2_visto and agora - self.t_flash1 > tempo_minimo and magenta_mask(crop[::10, ::10]).mean() > 0.6:
             self.flash2_visto = True
             self.t_flash2 = agora
             self.log(f'flash final em {agora - self.t_flash1:.2f}s')

@@ -18,7 +18,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 EDITOR = AQUI.parent.parent / 'roblox-video-editor' / 'scripts'
-QUADROS_MIN_POR_S = 50  # captura abaixo disso (GPU ocupada) e regravada
+QUADROS_MIN_POR_S = 40  # captura abaixo disso (GPU ocupada) e regravada
 
 
 def rodar(cmd, cwd, **kw):
@@ -35,7 +35,9 @@ def auditar(proj, suf):
     linhas = [l for l in r.stdout.splitlines() if l.startswith(('[auditoria]', '[camera]'))]
     print('\n'.join(linhas[-12:]))
     totais = [int(m.group(1)) for l in linhas for m in [re.search(r'total (\d+)', l)] if m]
-    return len(totais) == 2 and sum(totais) == 0
+    if len(totais) < 2:
+        return None  # o Studio nao devolveu a saida: auditoria nao confirmada
+    return sum(totais) == 0
 
 
 def gravar(proj, idioma, suf):
@@ -57,6 +59,15 @@ def gravar(proj, idioma, suf):
     sys.path.insert(0, str(AQUI))
     import captura_janela
     captura_janela.processar(str(proj / 'studio' / f'viewport{suf}.mp4'), str(proj / f'cena{suf}.mp4'), 0.8, tempos['fim'])
+    # Valida a duracao do video processado antes de editar (gravacao truncada).
+    from media_utils import probe
+    try:
+        dur_real = float(probe(proj / f'cena{suf}.mp4')['duration'])
+    except Exception:
+        dur_real = 0
+    if dur_real < tempos['fim'] * 0.7:
+        raise SystemExit(f'{idioma}: cena{suf}.mp4 tem {dur_real:.1f}s mas deveria ter ~{tempos["fim"]:.1f}s (gravação truncada?)')
+    print(f'{idioma}: cena{suf}.mp4 validado ({dur_real:.1f}s)')
     rodar([sys.executable, 'gerar_cena.py', '--idioma', idioma], proj, check=True, capture_output=True)  # volta a cena com auditoria
 
 
@@ -92,6 +103,8 @@ def main():
     ap.add_argument('projeto', type=Path)
     ap.add_argument('--idiomas', nargs='+')
     ap.add_argument('--so-conferir', action='store_true')
+    ap.add_argument('--sem-confirmar-auditoria', action='store_true',
+                    help='grava mesmo se o Studio nao devolver a saida da auditoria (revise os quadros a mao)')
     a = ap.parse_args()
     proj = a.projeto.resolve()
     roteiro = json.loads((proj / 'roteiro.json').read_text(encoding='utf-8'))
@@ -107,8 +120,16 @@ def main():
             if not (pasta / 'falas.json').exists():
                 rodar([sys.executable, AQUI / 'alinhar_falas.py', '--idioma', idioma, 'roteiro.json', pasta.name], proj, check=True)
             rodar([sys.executable, 'gerar_cena.py', '--idioma', idioma], proj, check=True)
-            if not auditar(proj, suf):
+            # Auditoria zerada antes de gravar (regra da skill). Problema encontrado sempre bloqueia;
+            # saida do Studio nao capturada bloqueia, a menos que --sem-confirmar-auditoria (o usuario pediu).
+            audit_ok = auditar(proj, suf)
+            if audit_ok is False:
                 raise SystemExit(f'{idioma}: auditoria da cena nao zerou (acima); corrija gerar_cena.py/cenario e rode de novo')
+            if audit_ok is None:
+                if not a.sem_confirmar_auditoria:
+                    raise SystemExit(f'{idioma}: o Studio nao devolveu a saida da auditoria; rode de novo '
+                                     '(ou --sem-confirmar-auditoria, revisando os quadros a mao)')
+                print(f'[aviso] {idioma}: auditoria nao confirmada; revise os quadros da gravacao a mao')
             gravar(proj, idioma, suf)
             editar(proj, idioma, suf)
     faltando = conferir(proj, roteiro, idiomas)

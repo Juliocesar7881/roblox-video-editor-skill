@@ -1,5 +1,11 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.11.1 — originalidade obrigatória e gravação mais robusta
+- Todo vídeo novo com ideia e roteiro inéditos: consultar o histórico em `entregas/`, registrar `originalidade.json` e usar os modelos só como infraestrutura (SKILL.md das duas skills).
+- Gravação: guarda de tempo no flash final (objetos magenta do cenário não encerram a captura antes da hora); `studio_runscript.py` lê a saída do Studio direto do processo, com o arquivo como reserva.
+- `fazer_bilingue.py`: confere a duração do `cena.mp4` antes de editar; auditoria com problema sempre bloqueia a gravação, e saída não capturada só passa com `--sem-confirmar-auditoria`.
+- `renderizar.py`: grafo do FFmpeg passado direto em `-filter_complex`.
+
 ## v1.11.0 — espanhol automático, gesto six seven e placas sem nada na frente
 - `scripts/fazer_bilingue.py PROJETO`: faz o Short nos dois idiomas numa rodada só (auditoria zerada, gravação com regravação se perder quadros, edição, revisão de legendas, render) e só termina com os dois MP4; `--so-conferir` acusa entrega sem o espanhol. O SKILL.md manda fazer o espanhol junto, sem esperar pedido.
 - `K.sixSeven(noob, lado)`: gesto "six seven" com as mãos, uma mão por palavra, sincronizado com a voz (Transform nas juntas depois do Animator).

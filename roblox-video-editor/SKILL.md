@@ -21,6 +21,10 @@ Execute `python scripts/preparar_ambiente.py` para verificar o cache. Requer Pyt
 
 Em Claude web, caminhos `C:`/`D:` não são acessíveis: use os arquivos anexados/expostos à sessão. Nunca alegue que leu ou editou um arquivo que não consegue acessar. Se a gravação não estiver acessível, peça somente o vídeo ou seu caminho acessível.
 
+## Originalidade da história
+
+Quando a tarefa incluir criar um vídeo ou roteiro, siga a originalidade obrigatória da skill `roblox-shorts-animator`: consulte o histórico e crie uma premissa, acontecimentos e reviravolta novos a cada vídeo. Não recicle o roteiro de um modelo ou de uma entrega anterior mudando somente falas, cores, nomes ou título. Ao editar gameplay existente, conte os acontecimentos reais de outra seleção ou história; não invente diálogos nem fatos para fabricar novidade. Reedições da mesma história e traduções são permitidas quando solicitadas ou previstas como versões do mesmo vídeo.
+
 ## Escolher a história a partir do vídeo
 
 1. Analise a **gravação inteira** com `scripts/analisar_gameplay.py VIDEO --out PROJETO/analise --proxy`; para gravações longas, aumente `--interval` na primeira passada. Depois examine candidatos com `--start/--end --interval 1` ou extraia quadros a 4 fps do proxy. Os tempos registrados são do original.

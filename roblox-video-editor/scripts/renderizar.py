@@ -425,7 +425,7 @@ def main():
             graph += [''.join(f'[{s}]' for s in all_audio) + f'amix=inputs={len(all_audio)}:normalize=0:duration=first,atrim=duration={total}[mix]']
             graph_file = tmp / 'graph.txt'; graph_file.write_text(';\n'.join(graph), encoding='utf-8')
             mixed = tmp / 'mixed.wav'
-            run([*inputs, '-filter_complex_script', graph_file, '-map', '[mix]', '-vn', '-c:a','pcm_s16le', '-t', total, mixed], args.out / f'{Path(name).stem}-mix.log')
+            run([*inputs, '-filter_complex', graph_file.read_text(encoding='utf-8'), '-map', '[mix]', '-vn', '-c:a','pcm_s16le', '-t', total, mixed], args.out / f'{Path(name).stem}-mix.log')
             # Two-pass loudness normalization measures the real mix, rather than guessing from file gain.
             target_i, target_tp = config.get('target_loudness_lufs', -14), config.get('target_true_peak_dbtp', -1.5)
             measured = run(['-i', mixed, '-af', f'loudnorm=I={target_i}:TP={target_tp}:LRA=9:print_format=json', '-f','null','-'])
@@ -455,7 +455,7 @@ def main():
             # Captions go last so stickers and camera moves never cover or shake the text.
             video_graph += [f"[v{len(overlays)}]ass=filename='{filter_path(ass)}':fontsdir='{filter_path(FONTES)}'[vout]"]
             final_graph = tmp / 'video-graph.txt'; final_graph.write_text(';\n'.join(video_graph), encoding='utf-8')
-            run([*final_inputs, '-filter_complex_script',final_graph,'-map','[vout]','-map','1:a:0',
+            run([*final_inputs, '-filter_complex', final_graph.read_text(encoding='utf-8'),'-map','[vout]','-map','1:a:0',
                  '-af', norm,
                  '-c:v','libx264','-crf',str(output.get('crf',16)),'-preset','medium',
                  '-pix_fmt','yuv420p','-c:a','aac','-ar','48000','-b:a','320k',

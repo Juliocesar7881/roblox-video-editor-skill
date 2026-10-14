@@ -11,6 +11,14 @@ Transforme uma ideia do usuário ("faz um de qual escorregador é o mais rápido
 
 Depende da skill irmã `roblox-video-editor` (renderizador, biblioteca de SFX/música e stickers). O `install.py` do repositório instala as duas.
 
+## Originalidade obrigatória em cada vídeo
+
+Cada vídeo novo precisa de uma **ideia e um roteiro inéditos**, mantendo o estilo infantil da skill. Nunca repetir uma premissa anterior nem copiar o roteiro de um modelo. Trocar cores, nomes, falas, título ou o objeto do mesmo desafio não torna a ideia nova. Só refazer ou continuar uma ideia quando o usuário pedir isso explicitamente; português e espanhol são versões do mesmo vídeo, não ideias diferentes.
+
+Antes de escrever o roteiro e gastar créditos de voz, leia os `roteiro.json` e registros de originalidade disponíveis em `entregas/`, incluindo vídeos entregues, em produção e já roteirizados. Compare premissa, objetivo do noob, mecânica da brincadeira, sequência de tentativas e reviravolta. Escolha outra ideia se a história repetir um vídeo anterior ou um modelo. Preserve voz, personagem, ritmo, linguagem visual, contagem e humor leve; invente a situação, os acontecimentos, as falas e a piada final.
+
+Registre no projeto `originalidade.json` com `premissa`, `objetivo`, `mecanica`, `tentativas`, `reviravolta`, `projetos_comparados` e `diferenca_dos_anteriores`. Se não houver histórico acessível, registre essa limitação sem alegar uma comparação que não fez. Os modelos servem para reutilizar infraestrutura técnica. Adapte cenário, eventos, câmeras, movimento, tempos, boca e edição ao roteiro novo; não mantenha a cena do modelo e apenas troque sua narração. Verifique a originalidade antes do TTS e novamente antes de gravar.
+
 ## Como o Studio é controlado (sem MCP e sem cliques)
 
 O Roblox Studio tem uma tarefa oficial de linha de comando: `RobloxStudioBeta.exe -task RunScript -localPlaceFile place.rbxlx -runScriptFile script.lua -outputFile saida.log -quitAfterExecution`. O script roda no place em modo edição, com permissão de command bar: cria peças, instala scripts, e inicia o modo Play com `StudioTestService:ExecutePlayModeAsync`. Quando a cena termina, o servidor chama `EndTest` e a janela fecha sozinha. As janelas do Studio que o usuário já tem abertas não são tocadas.
@@ -23,7 +31,7 @@ O Roblox Studio tem uma tarefa oficial de linha de comando: `RobloxStudioBeta.ex
 
 ## Fluxo
 
-1. **Projeto**: crie `entregas/<tema>-<data>` e copie o modelo mais parecido de [modelos/](modelos/) (`escorregador/`: `roteiro.json`, `gerar_cena.py`, `montar_edicao.py`, `studio/cenario.lua`, `studio/base.rbxlx`).
+1. **Projeto e ideia inédita**: crie `entregas/<tema>-<data>`, confira o histórico conforme a seção de originalidade e escreva um roteiro novo. Use [modelos/](modelos/) somente como referência de infraestrutura (place base, AnimKit, captura e renderização). Não copie a história, as tentativas ou a reviravolta do modelo. Adapte os scripts e o cenário à nova ideia.
 2. **Roteiro** (`roteiro.json`), já bilíngue: `texto` (português) e `texto_es` (espanhol latino neutro, falado por criança, sem regionalismos pesados) em cada fala, `titulo`/`titulo_es`, `arquivo`/`arquivo_es` (nomes dos MP4) e `"idiomas": ["pt", "es"]`. falas curtas do noob com tag de emoção para o ElevenLabs (`[curioso]`, `[confuso]`, `[gritando]`...), `destaques` (palavras em amarelo) e plano por fala. Formato em formato.md. Roteiro original; nada copiado de outros criadores.
 3. **Voz do Roger**, por um destes caminhos:
    - Chave de API em `ELEVENLABS_API_KEY` (o próprio usuário define com `setx`): `python scripts/tts_elevenlabs.py roteiro.json --out falas` já devolve os tempos de cada palavra.

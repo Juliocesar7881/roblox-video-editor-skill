@@ -167,9 +167,25 @@ def rodar(a):
     args = [str(exe), '-task', 'RunScript', '-localPlaceFile', str(a.place.resolve()),
             '-runScriptFile', str(a.pipeline.resolve()), '-outputFile', str(out_log.resolve()), '-quitAfterExecution']
     t0 = time.time()
-    studio = subprocess.Popen(args)
+    # Capture stdout/stderr directly instead of relying on -outputFile which may not work
+    studio = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              encoding='utf-8', errors='replace', bufsize=1)
     log(f'Studio iniciado (pid {studio.pid})')
     meta = None
+
+    # Start reading output in background thread
+    import threading
+    output_lines = []
+    def read_output():
+        for line in studio.stdout:
+            output_lines.append(line.rstrip())
+            # Print important lines immediately
+            if any(k in line for k in ['[pipeline]', '[auditoria]', '[camera]', 'error', 'Error', 'warn']):
+                print(line.rstrip(), flush=True)
+
+    reader_thread = threading.Thread(target=read_output, daemon=True)
+    reader_thread.start()
+
     if a.gravar:
         from captura_janela import Gravador
         hwnd, title = studio_window(studio.pid)
@@ -181,6 +197,16 @@ def rodar(a):
                 time.sleep(1.5)
                 mandar_para_tras(hwnd)
             g = Gravador(hwnd, a.gravar, fps=a.fps, log=log)
+            # Passa duração esperada da cena para guarda temporal do flash2
+            try:
+                import json, re
+                pipeline_text = a.pipeline.read_text(encoding='utf-8')
+                m = re.search(r'K\.rodar\([^,]+,\s*([\d.]+)\)', pipeline_text)
+                if m:
+                    g.duracao_esperada = float(m.group(1))
+                    log(f'duracao_esperada={g.duracao_esperada:.1f}s para guarda temporal')
+            except Exception as e:
+                log(f'aviso: nao foi possivel extrair duracao_esperada: {e}')
             meta = g.gravar(timeout=a.max)
             log(f'gravacao: {meta}')
     try:
@@ -188,14 +214,23 @@ def rodar(a):
     except subprocess.TimeoutExpired:
         log('tempo maximo atingido; fechando o Studio desta gravacao')
         studio.kill()
+
+    # Wait for reader thread to finish
+    reader_thread.join(timeout=2)
+
     log(f'Studio terminou em {time.time() - t0:.1f}s (codigo {studio.returncode})')
-    if out_log.exists():
+
+    # Print captured output
+    if output_lines:
+        print('\n'.join(output_lines), flush=True)
+    elif out_log.exists():
+        # Fallback to file if stdout capture failed
         text = out_log.read_text(encoding='utf-8', errors='replace')
-        # The log echoes the whole script first; show only what it printed.
         tail = a.pipeline.read_text(encoding='utf-8').rstrip()[-120:]
         print(text.split(tail, 1)[-1].strip() if tail in text else text)
     else:
-        print('(sem arquivo de saida do Studio)')
+        print('(sem output capturado do Studio)')
+
     return meta
 
 
