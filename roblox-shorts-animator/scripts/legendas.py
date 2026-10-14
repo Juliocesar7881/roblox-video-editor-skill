@@ -115,7 +115,9 @@ def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, 
                 fim_grupo = min(fim_grupo, grupos[gi + 1][0]['start'])
             eventos = _eventos_do_grupo(g, fim_grupo, minimo, pausa_destaque)
             # Corte no meio do grupo: o grupo so entra no corte (sem legenda antes dele).
-            dentro = [c - base for c in cortes if base + g[0]['start'] + 0.05 < c < base + g[-1]['end']]
+            # Corte nos ultimos instantes do grupo e da frase seguinte: o grupo nao espera por ele
+            # (so termina no corte, mais abaixo), senao ficaria um fiapo de 50 ms piscando.
+            dentro = [c - base for c in cortes if base + g[0]['start'] + 0.05 < c < base + g[-1]['end'] - 0.15]
             if dentro:
                 c = max(dentro)
                 eventos = [ev for ev in eventos if ev['fim'] > c + 0.02]
