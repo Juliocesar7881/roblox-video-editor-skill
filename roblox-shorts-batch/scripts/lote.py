@@ -196,7 +196,7 @@ def cmd_metadados(a):
             texto = f'{rotulos[0]}:\n{titulo}\n\n{rotulos[1]}:\n{corpo}\n\n{rotulos[2]}:\n{", ".join(meta["tags"])}\n'
             (p / f'publicacao{s}.txt').write_text(texto, encoding='utf-8')
             problemas += [f'{p.name} {idioma}: {e}' for e in erros]
-    print('\n'.join(problemas) if problemas else 'metadados OK (20 arquivos publicacao-pt/es.json)')
+    print('\n'.join(problemas) if problemas else f'metadados OK ({2 * len(projetos(lote))} arquivos publicacao-pt/es.json)')
     sys.exit(1 if problemas else 0)
 
 
