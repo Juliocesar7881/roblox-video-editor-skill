@@ -1,5 +1,11 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.13.0 — base comum do lote, braços posáveis e sete efeitos originais
+- `roblox-shorts-batch/modelos/lote-base` (copiada pelo `lote.py novo`): `comum.py` (timeline pelas falas reais, palavra exata com `c.w`, boca pela voz, PT/ES, ajudantes Luau para mover, escalar, arremessar em arco, soldar, mostrar, pintar, partículas), `cenario_comum.lua` (peças, cilindros em pé, elipses, modelos soldados, árvores, flores, nuvens, prédios, gramado) e `edicao.py` (efeitos por categoria, zoom, tremida, flash, stickers, contagem 5-4-3-2-1 e legendas karaokê presas aos cortes). O SKILL.md do lote ganhou a lista do que a auditoria não vê (objeto na frente do rosto, `K.inserto` dentro do corte, coisa larga no 9:16, porta em superfície curva, objeto balançando).
+- `K.bracos(noob, pose, t)`: poses de braço por Transform nas juntas (`segurarAcima`, `segurarFrente`, `arremesso`, `empurrar`, `comemorar`, `maoNoAlto`, `regar`, `cobrirOlhos`, `esticarCima`, ou tabela própria), com transição suave e `nil` para soltar.
+- Sete efeitos originais sintetizados (`criar_sfx_extras.py`, licença livre): cascata de dominó, onda do mar, espuma borbulhando, vento forte, apito subindo, jato de mangueira e regador.
+- Legendas: nenhuma frase atravessa um corte de câmera (termina no corte ou começa nele); `revisar_legendas.py` mede o texto com limiar relativo ao brilho do quadro (sem falso "2 linhas" no esmaecer).
+
 ## v1.12.0 — lote semanal: 10 Shorts em PT e ES e agendamento no YouTube
 - Nova skill `roblox-shorts-batch`: lote de 10 histórias inéditas (histórico de todos os Shorts para não repetir, eixos e formatos variados, muitas cores), cada uma produzida em português e espanhol pela `roblox-shorts-animator` (`lote.py produzir` roda o `fazer_bilingue.py` de cada projeto e segue mesmo se um falhar).
 - Metadados do YouTube validados por vídeo e idioma (`lote.py metadados`): título com `#shorts`, descrição, hashtags, créditos da música e da voz, tags dentro do limite, "feito para crianças".

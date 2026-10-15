@@ -70,6 +70,9 @@ def cmd_novo(a):
         (p / 'falas').mkdir()
         (p / 'falas-es').mkdir()
         shutil.copy2(ANIMADOR / 'assets' / 'base.rbxlx', p / 'studio' / 'base.rbxlx')
+    # Base comum das cenas e edições (timeline pelas falas reais, ajudantes Luau, cenário, legendas e efeitos).
+    for f in (SKILL / 'modelos' / 'lote-base').glob('*'):
+        shutil.copy2(f, lote / f.name)
     gravar(lote / 'lote.json', {'criado': data, 'videos': c['videos_por_lote'], 'status': {}})
     print(lote)
     print('Renomeie cada pasta NN-a-definir para NN-<tema> ao escrever o roteiro.')

@@ -140,6 +140,25 @@ def legendas_karaoke(falas, inicios, max_palavras=4, max_letras=24, folga=0.15, 
         corte = [x for x in cortes if c['start'] + 0.02 < x < c['end']]
         if corte and c.get('saida'):
             c['end'] = round(min(corte), 3)
+    # Nenhuma legenda atravessa um corte (inclusive quando o corte cai no fim da ultima palavra): a que
+    # comecou bem antes termina no corte e o resto do grupo some; a que comecou em cima do corte
+    # passa a comecar nele.
+    caps.sort(key=lambda c: c['start'])
+    for x in sorted(cortes):
+        i = 0
+        while i < len(caps):
+            c = caps[i]
+            if c['start'] + 0.02 < x < c['end'] - 0.02:
+                if x - c['start'] >= minimo:
+                    c['end'] = round(x, 3)
+                    c['saida'] = True
+                    j = i + 1
+                    while j < len(caps) and not caps[j].get('entrada') and caps[j]['start'] < x + 0.6:
+                        del caps[j]
+                else:
+                    c['start'] = round(x, 3)
+                    c['entrada'] = True
+            i += 1
     # Sobra branca curta demais (< minimo) antes do corte pisca: o destaque anterior fica ate o fim.
     caps.sort(key=lambda c: c['start'])
     for i in range(len(caps) - 1, 0, -1):

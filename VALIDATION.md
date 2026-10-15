@@ -1,5 +1,10 @@
 # Validação antes da publicação
 
+## v1.13.0 (15 de outubro de 2026)
+
+- 33 testes passaram (biblioteca agora com 204 arquivos no catálogo e 89 no manifesto público, contando os 7 efeitos originais novos com hash conferido).
+- Lote real de 10 Shorts (20 MP4, PT e ES) feito com a base comum `modelos/lote-base`: em cada vídeo e idioma `[auditoria] total 0`, `[camera] total 0` e `[legenda] total 0` antes do render; prévia em PT revisada quadro a quadro antes de produzir.
+
 ## v1.9.0 (11 de outubro de 2026)
 
 - 32 testes passaram, incluindo a geometria do rosto do vídeo de referência e a legenda que só entra no corte ("OU O AMARELO GIGANTE?" em 5,74 s, sem destaque piscando).

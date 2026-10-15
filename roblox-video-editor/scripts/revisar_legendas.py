@@ -93,7 +93,10 @@ def revisar(spec_path, saida=None, fps=30, largura=360):
         abertos = {}
         for i, q in enumerate(quadros):
             t = i / fps
-            texto = q > 150  # miolo branco/amarelo; o contorno escuro some no fundo preto
+            # Miolo branco/amarelo (o contorno escuro some no fundo preto). Na entrada/saida em fade o texto
+            # escurece por igual: o limiar acompanha o brilho do quadro para nao partir as letras.
+            topo = int(q.max())
+            texto = q > (150 if topo >= 230 else max(40, int(topo * 0.6)))
             achados = []
             bandas = faixas_de_texto(texto[alt // 2:].any(axis=1))
             if len(bandas) > 1:

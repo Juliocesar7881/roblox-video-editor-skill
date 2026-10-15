@@ -766,6 +766,80 @@ if RunService:IsRunning() then
 	end)
 end
 
+-- Pose dos bracos por cima da animacao (segurar, arremessar, empurrar, comemorar...), pelo mesmo
+-- caminho do six seven (Transform das juntas depois do Animator). nome: chave de AnimKit.BRACOS ou
+-- tabela {Junta = {x, z}} em graus (x: ombro/cotovelo para a frente; z: abre o braco para fora);
+-- t: transicao (0,2 s); nil solta os bracos. As pernas e o corpo seguem a animacao que estiver tocando.
+local bracos = {} -- tabela forte (mesmo motivo de 'poses')
+AnimKit.BRACOS = {
+	-- Medidas (mãos em relação à raiz): segurarAcima x ±0,85 y 2,2; segurarAcimaJunto x ±0,47 y 2,2;
+	-- segurarFrente x ±0,9 y 0,7 z -1,6 (na frente); segurarFrenteJunto x ±0,6 y 0,7 z -1,8.
+	segurarAcima = { LeftShoulder = { 160, -25 }, RightShoulder = { 160, -25 }, LeftElbow = { 50, 0 }, RightElbow = { 50, 0 } },
+	segurarAcimaJunto = { LeftShoulder = { 170, -35 }, RightShoulder = { 170, -35 }, LeftElbow = { 30, 0 }, RightElbow = { 30, 0 } },
+	arremesso = { LeftShoulder = { 120, 8 }, RightShoulder = { 120, 8 }, LeftElbow = { 5, 0 }, RightElbow = { 5, 0 } },
+	segurarFrente = { LeftShoulder = { 60, -25 }, RightShoulder = { 60, -25 }, LeftElbow = { 60, 0 }, RightElbow = { 60, 0 } },
+	segurarFrenteJunto = { LeftShoulder = { 80, -30 }, RightShoulder = { 80, -30 }, LeftElbow = { 30, 0 }, RightElbow = { 30, 0 } },
+	empurrar = { LeftShoulder = { 85, 6 }, RightShoulder = { 85, 6 }, LeftElbow = { 5, 0 }, RightElbow = { 5, 0 } },
+	comemorar = { LeftShoulder = { 160, 38 }, RightShoulder = { 160, 38 }, LeftElbow = { 10, 0 }, RightElbow = { 10, 0 } },
+	maoNoAlto = { RightShoulder = { 170, 8 }, RightElbow = { 5, 0 } },
+	regar = { RightShoulder = { 60, 12 }, RightElbow = { 25, 0 } },
+	cobrirOlhos = { LeftShoulder = { 125, -12 }, RightShoulder = { 125, -12 }, LeftElbow = { 115, 0 }, RightElbow = { 115, 0 } },
+	esticarCima = { LeftShoulder = { 175, 10 }, RightShoulder = { 175, 10 }, LeftElbow = { 0, 0 }, RightElbow = { 0, 0 } },
+}
+local JUNTAS_BRACO = { "LeftShoulder", "RightShoulder", "LeftElbow", "RightElbow" }
+local function cfBraco(nome, v)
+	if not v then return CFrame.new() end
+	local r = math.rad
+	local z = v[2] or 0
+	if nome:sub(1, 4) == "Left" then z = -z end
+	return CFrame.Angles(r(v[1]), 0, r(z))
+end
+function AnimKit.bracos(noob, nome, t)
+	local b = bracos[noob]
+	if nome == nil then
+		if b then
+			b.de = b.atual
+			b.alvo = {}
+			b.t0, b.dur, b.soltar = os.clock(), t or 0.2, true
+		end
+		return
+	end
+	local tabela = type(nome) == "table" and nome or AnimKit.BRACOS[nome]
+	if not tabela then error("pose de bracos desconhecida: " .. tostring(nome)) end
+	if not b then
+		b = { juntas = {}, atual = {} }
+		for _, m in ipairs(noob:GetDescendants()) do
+			if (m:IsA("AnimationConstraint") or m:IsA("Motor6D")) and table.find(JUNTAS_BRACO, m.Name) then
+				b.juntas[m.Name] = m
+				b.atual[m.Name] = CFrame.new()
+			end
+		end
+		bracos[noob] = b
+	end
+	b.de = table.clone(b.atual)
+	b.alvo = {}
+	for _, j in ipairs(JUNTAS_BRACO) do b.alvo[j] = cfBraco(j, tabela[j]) end
+	b.t0, b.dur, b.soltar = os.clock(), t or 0.2, false
+end
+if RunService:IsRunning() then
+	RunService.Stepped:Connect(function()
+		for noob, b in pairs(bracos) do
+			if not noob.Parent then
+				bracos[noob] = nil
+			else
+				local k = math.clamp((os.clock() - b.t0) / b.dur, 0, 1)
+				local e = TweenService:GetValue(k, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				for nome, m in pairs(b.juntas) do
+					local de, para = b.de[nome] or CFrame.new(), b.alvo[nome] or CFrame.new()
+					b.atual[nome] = de:Lerp(para, e)
+					if not b.soltar or k < 1 then m.Transform = b.atual[nome] end
+				end
+				if b.soltar and k >= 1 then bracos[noob] = nil end
+			end
+		end
+	end)
+end
+
 local cacheAnim = {} -- tabela forte: com chaves fracas o Roblox pode coletar o proxy da Instance e perder a entrada
 function AnimKit.anim(noob, nome, opcoes)
 	opcoes = opcoes or {}

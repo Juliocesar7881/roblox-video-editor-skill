@@ -17,7 +17,7 @@ class Policies(unittest.TestCase):
 
  def test_public_manifest(self):
   rows=json.loads((SKILL/'assets/audio-manifest.json').read_text(encoding='utf-8'))['assets']
-  self.assertEqual(len(rows),82)
+  self.assertEqual(len(rows),89)
   self.assertTrue(all(r['commercial_allowed'] and r['distribution_allowed'] for r in rows))
   full=[r for r in rows if r.get('version')=='full']
   self.assertEqual(len(full),36)
@@ -28,9 +28,9 @@ class Policies(unittest.TestCase):
  def test_complete_bundled_library(self):
   library=SKILL/'assets/biblioteca-audio'
   rows=json.loads((library/'catalogo.json').read_text(encoding='utf-8'))['assets']
-  self.assertEqual(len(rows),197)
+  self.assertEqual(len(rows),204)
   self.assertEqual(sum(r['license_status']=='unverified' for r in rows),38)
-  self.assertEqual(sum(r.get('commercial_allowed',False) for r in rows),159)
+  self.assertEqual(sum(r.get('commercial_allowed',False) for r in rows),166)
   for row in rows:
    with self.subTest(file=row['path']):
     file=library/row['path']

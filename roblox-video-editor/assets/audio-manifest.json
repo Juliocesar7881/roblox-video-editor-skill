@@ -1704,6 +1704,90 @@
       "content_review": "instrumental",
       "distribution_allowed": true,
       "bundled_file": "assets/audio-original/apito-escorregador.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/domino-cascata.mp3",
+      "duration_seconds": 12.0,
+      "sha256": "745701addcd8725643b4cb7c02d4d8927e0dfc640ce2356d616ad922fb1b8724",
+      "bytes": 289866,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/domino-cascata.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/onda-mar.mp3",
+      "duration_seconds": 3.6,
+      "sha256": "65fdb4d16c24d99f8381684ad20ca5f80e7a46350f17abcd423b818a0eabbced",
+      "bytes": 39048,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/onda-mar.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/espuma-borbulha.mp3",
+      "duration_seconds": 4.0,
+      "sha256": "a65fd9403006f71f187cc68028e7014a4a520c27a690ff75f725e41d49ff5ee0",
+      "bytes": 86478,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/espuma-borbulha.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/vento-forte.mp3",
+      "duration_seconds": 4.0,
+      "sha256": "1120ca492be0294d80b09ac100db0cc1910022dee9b72992bcf3135fcf0a4530",
+      "bytes": 49104,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/vento-forte.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/apito-sobe.mp3",
+      "duration_seconds": 1.5,
+      "sha256": "60e56fe13c2fe84f3fa1fcc27a9c98f29c0873b2bd8b1452bfacb056b0791c1e",
+      "bytes": 13136,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/apito-sobe.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/jato-agua.mp3",
+      "duration_seconds": 3.0,
+      "sha256": "9337095afdca2bd931a70b135fd3c7c5fbd96c95be60685f560ddd11c94b319b",
+      "bytes": 43769,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/jato-agua.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/regador-gotas.mp3",
+      "duration_seconds": 2.5,
+      "sha256": "1d54663d7786ac2d9929746e41dea5030b8add7900ad36ee3bd54dbb77e29dff",
+      "bytes": 32694,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/regador-gotas.mp3"
     }
   ],
   "license_notice": "Music CC BY 4.0: give credit and indicate edits. Original synthesized SFX have no required attribution."
