@@ -350,6 +350,36 @@ class Animator(unittest.TestCase):
             self.assertTrue((ROOT / 'roblox-video-editor' / 'assets' / 'audio-original' / f'{nome}.mp3').exists())
         self.assertIn('[Brazilian Portuguese accent]', (ANIM / 'SKILL.md').read_text(encoding='utf-8'))
 
+    def test_old_scenes_adjust_camera_moves_and_bad_capture_is_retried(self):
+        # Cenas antigas refeitas (c.ajustar_movimentos = True): o travelling termina antes do corte ou sai se o plano
+        # for curto; gravacao sem flash de sincronia nao pode reaproveitar o viewport da gravacao anterior.
+        import contextlib, io
+        base = ROOT / 'roblox-shorts-batch' / 'modelos' / 'lote-base'
+        sys.path.insert(0, str(base))
+        try:
+            import comum
+        finally:
+            sys.path.remove(str(base))
+
+        class Cena:
+            pass
+        c = Cena()
+        c.cortes, c.ajustar_movimentos = [2.0, 2.5], True
+        c.ev = [(0.5, '\t\tcam.corte(V(1, 2, 3), V(0, 1, 0), 50)\n\t\tcam.mover(V(-3, 6.2, -33), V(-1, -1.6, -20), 2.4, 48)'),
+                (2.0, '\t\tcam.corte(V(1, 2, 3), V(0, 1, 0), 50)\n\t\tcam.rosto(noob, 5.6, 44, {lado = 0.5, t = 0.9})')]
+        with contextlib.redirect_stdout(io.StringIO()):
+            comum.Cena.conferir_movimentos(c, 4.0)
+        self.assertIn('cam.mover(V(-3, 6.2, -33), V(-1, -1.6, -20), 1.45, 48)', c.ev[0][1])
+        self.assertEqual(c.ev[1][1], '\t\tcam.corte(V(1, 2, 3), V(0, 1, 0), 50)')
+        c.ajustar_movimentos = False
+        c.ev = [(0.5, '\t\tcam.mover(V(0, 0, 0), V(0, 1, 0), 2.4, 48)')]
+        with self.assertRaises(SystemExit), contextlib.redirect_stdout(io.StringIO()):
+            comum.Cena.conferir_movimentos(c, 4.0)
+        fazer = (ANIM / 'scripts' / 'fazer_short.py').read_text(encoding='utf-8')
+        self.assertIn("info.get('escritos')", fazer)
+        self.assertIn('st_mtime < inicio', fazer)
+        self.assertIn('o Play nao comecou', (ANIM / 'scripts' / 'studio_runscript.py').read_text(encoding='utf-8'))
+
 
 if __name__ == '__main__':
     unittest.main()

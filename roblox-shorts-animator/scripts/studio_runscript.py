@@ -209,6 +209,10 @@ def rodar(a):
                 log(f'aviso: nao foi possivel extrair duracao_esperada: {e}')
             meta = g.gravar(timeout=a.max)
             log(f'gravacao: {meta}')
+            if g.t_flash1 is None and studio.poll() is None:
+                # O Play nao comecou (sem flash inicial): nao adianta esperar mais; quem chamou tenta de novo.
+                log('sem flash inicial: o Play nao comecou; fechando o Studio desta gravacao')
+                studio.kill()
     try:
         studio.wait(timeout=a.max)
     except subprocess.TimeoutExpired:

@@ -13,7 +13,7 @@ O projeto precisa ter gerar_cena.py e montar_edicao.py (como os modelos da skill
 (ElevenLabs, voz Roger). --so-conferir: so a conferencia final (nao grava nada).
 Os Shorts saem so em portugues (canal BRUNOBLOX); --idiomas existe apenas para compatibilidade.
 """
-import argparse, json, re, shutil, subprocess, sys
+import argparse, json, re, shutil, subprocess, sys, time
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -47,15 +47,23 @@ def gravar(proj, idioma, suf):
            '--cena', f'studio/cena{suf}.lua', '--play', '--saida', f'studio/pipeline{suf}.lua'], proj, check=True,
           capture_output=True)
     minimo = QUADROS_MIN_POR_S * tempos['fim']
+    video, meta = proj / 'studio' / f'viewport{suf}.mp4', proj / 'studio' / f'viewport{suf}.json'
     for tentativa in range(1, 5):
+        inicio = time.time()
         rodar([sys.executable, AQUI / 'studio_runscript.py', 'rodar', f'studio/pipeline{suf}.lua', '--place', 'studio/base.rbxlx',
                '--gravar', f'studio/viewport{suf}.mp4', '--frente'], proj, capture_output=True, timeout=600)
-        n = json.loads((proj / 'studio' / f'viewport{suf}.json').read_text(encoding='utf-8'))['recebidos']
+        info = json.loads(meta.read_text(encoding='utf-8')) if meta.exists() and meta.stat().st_mtime >= inicio else {}
+        # Sem o flash de sincronia (Play que nao comecou) o gravador nao escreve nada e o viewport da gravacao
+        # anterior continua no disco: isso e falha, nunca uma captura valida.
+        if not info.get('escritos') or not info.get('regiao') or not video.exists() or video.stat().st_mtime < inicio:
+            print(f'{idioma}: tentativa {tentativa} falhou (o Play nao comecou ou nao apareceu o flash de sincronia)')
+            continue
+        n = info['recebidos']
         print(f'{idioma}: tentativa {tentativa}, {n} quadros (minimo {minimo:.0f})')
         if n >= minimo:
             break
     else:
-        raise SystemExit(f'{idioma}: captura sempre abaixo de {minimo:.0f} quadros (GPU ocupada?)')
+        raise SystemExit(f'{idioma}: nenhuma captura valida em 4 tentativas (Play sem flash ou abaixo de {minimo:.0f} quadros)')
     sys.path.insert(0, str(AQUI))
     import captura_janela
     captura_janela.processar(str(proj / 'studio' / f'viewport{suf}.mp4'), str(proj / f'cena{suf}.mp4'), 0.8, tempos['fim'])

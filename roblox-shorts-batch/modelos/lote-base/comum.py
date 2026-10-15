@@ -93,15 +93,36 @@ class Cena:
         return round(max(0.2, prox - t - folga), 3)
 
     def conferir_movimentos(self, fim):
-        """Recusa travelling de câmera (cam.mover / cam.rosto com t) que um corte interrompe antes de terminar."""
+        """Recusa travelling de câmera (cam.mover / cam.rosto com t) que um corte interrompe antes de terminar.
+        Com c.ajustar_movimentos = True (cenas antigas), ajusta sozinho: o travelling termina antes do corte, ou
+        sai (plano parado) se o plano tiver menos de 0,6 s."""
         cortes = sorted(self.cortes) + [fim]
         erros = []
-        for t, corpo in self.ev:
-            for dur in _duracoes_camera(corpo):
-                prox = next((c for c in cortes if c > t + 0.01), fim)
-                if t + dur > prox + 0.02:
-                    erros.append(f'travelling em {t:.2f}s dura {dur:.2f}s mas o corte vem em {prox:.2f}s '
-                                 f'(use c.ate_corte({t:.2f}) = {max(0.2, prox - t - 0.05):.2f})')
+        ajustar = getattr(self, 'ajustar_movimentos', False)
+        for n, (t, corpo) in enumerate(self.ev):
+            prox = next((c for c in cortes if c > t + 0.01), fim)
+            lim = prox - t - 0.05
+            trocas = []
+            for m in _movimentos_camera(corpo):
+                if t + m['dur'] <= prox + 0.02:
+                    continue
+                if ajustar:
+                    trocas.append((m, lim))
+                else:
+                    erros.append(f'travelling em {t:.2f}s dura {m["dur"]:.2f}s mas o corte vem em {prox:.2f}s '
+                                 f'(use c.ate_corte({t:.2f}) = {max(0.2, lim):.2f})')
+            for m, lim in sorted(trocas, key=lambda x: -x[0]['ini']):
+                if lim >= 0.6:
+                    corpo = corpo[:m['d0']] + f'{lim:.2f}' + corpo[m['d1']:]
+                    print(f'[movimento] {t:.2f}s: travelling de {m["dur"]:.2f}s encurtado para {lim:.2f}s (corte em {prox:.2f}s)')
+                else:
+                    ini = corpo.rfind('\n', 0, m['ini']) + 1
+                    fim_linha = corpo.find('\n', m['fim'])
+                    fim_linha = len(corpo) if fim_linha < 0 else fim_linha + 1
+                    corpo = (corpo[:ini] + corpo[fim_linha:]).rstrip('\n') or '\t\t-- (travelling removido: plano curto)'
+                    print(f'[movimento] {t:.2f}s: travelling de {m["dur"]:.2f}s removido (plano de {prox - t:.2f}s)')
+            if trocas:
+                self.ev[n] = (t, corpo)
         for e in erros:
             print('[movimento]', e)
         if erros:
@@ -145,6 +166,41 @@ def _args(texto, ini):
         else:
             atual += ch
     return args
+
+
+def _movimentos_camera(corpo):
+    """Travellings de câmera num evento Luau: posição da chamada (ini/fim), do número da duração (d0/d1) e dur."""
+    out = []
+    for nome in ('mover', 'rosto'):
+        for m in re.finditer(r'cam\.' + nome + r'\(', corpo):
+            nivel, pos, args, comeco = 0, m.end(), [], m.end()
+            while pos < len(corpo):
+                ch = corpo[pos]
+                if ch in '({[':
+                    nivel += 1
+                elif ch in ')}]':
+                    if nivel == 0:
+                        args.append((comeco, pos))
+                        break
+                    nivel -= 1
+                elif ch == ',' and nivel == 0:
+                    args.append((comeco, pos))
+                    comeco = pos + 1
+                pos += 1
+            if nome == 'mover' and len(args) >= 3:
+                a0, a1 = args[2]
+                txt = corpo[a0:a1]
+                num = re.search(r'[\d.]+', txt)
+                if num and re.fullmatch(r'\s*[\d.]+\s*', txt):
+                    out.append({'ini': m.start(), 'fim': pos + 1, 'd0': a0 + num.start(), 'd1': a0 + num.end(),
+                                'dur': float(num.group())})
+            elif nome == 'rosto' and len(args) >= 4:
+                a0, a1 = args[3]
+                num = re.search(r'(?<![A-Za-z_])t\s*=\s*([\d.]+)', corpo[a0:a1])
+                if num:
+                    out.append({'ini': m.start(), 'fim': pos + 1, 'd0': a0 + num.start(1), 'd1': a0 + num.end(1),
+                                'dur': float(num.group(1))})
+    return out
 
 
 def _duracoes_camera(corpo):

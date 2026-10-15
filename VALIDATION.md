@@ -1,5 +1,12 @@
 # Validação antes da publicação
 
+## v1.15.1 (15 de outubro de 2026)
+
+- 35 testes passaram (novo: `test_old_scenes_adjust_camera_moves_and_bad_capture_is_retried`).
+- Quatro Shorts do lote de 14/10 (boneco de neve, abóbora, arco-íris e esconde-esconde) refeitos com as regras da v1.15.0: falas novas na versão `eleven_v4` com sotaque brasileiro, nenhum efeito cortado, travellings ajustados sozinhos para terminar antes do corte (`c.ajustar_movimentos`), guarda-sol do boneco de neve fora da geladeira. Em todos: `[auditoria] total 0`, `[camera] total 0`, `[legenda] total 0`; −14,0 a −14,2 LUFS, pico −1,9 a −2,0 dBTP; Whisper com 98–100% das falas no áudio final (o "Já? Já?" repetido de uma fala foi cortado antes).
+- Reagendados no BRUNOBLOX nas mesmas datas (18, 21, 23 e 25/10 às 09:00, confirmado na janela "Video scheduled" de cada um); a versão antiga do esconde-esconde ficou privada (não apagada) para não sair no mesmo dia.
+- Uma gravação em que o Play do Studio não começou (sem flash, 0 quadros escritos) teria sido aceita pelo `fazer_short.py` antigo, que processaria o `viewport.mp4` da gravação anterior; com a correção, a tentativa conta como falha e a regravação passou (1.676 quadros).
+
 ## v1.15.0 (15 de outubro de 2026)
 
 - 34 testes passaram (novo: `test_no_cut_camera_moves_or_sounds`).

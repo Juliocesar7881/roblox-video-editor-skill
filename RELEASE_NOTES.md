@@ -1,5 +1,10 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.15.1 — vídeos antigos refeitos com as regras novas e gravação que não reaproveita vídeo velho
+- `c.ajustar_movimentos = True` na cena refaz vídeos feitos antes da v1.15.0 sem reescrever as câmeras à mão: travelling que um corte interromperia é encurtado para terminar antes do corte, ou sai (plano parado) se o plano tiver menos de 0,6 s; cada ajuste aparece como `[movimento] ...`.
+- `fazer_short.py`: gravação sem o flash de sincronia (Play do Studio que não começou) agora é falha e é refeita. Antes, o número de quadros recebidos passava na conferência e o `viewport.mp4` da gravação anterior podia ser processado no lugar do novo. O `studio_runscript.py` fecha logo o Studio dessa gravação em vez de esperar mais 4 minutos.
+- Voz: configuração aprovada pelo cliente documentada nas duas skills (Eleven v4, idioma Automático, `[Brazilian Portuguese accent]`, versão `eleven_v4` de cada geração; português do Brasil, nunca de Portugal). Fala de uma palavra que sai repetida ("Já? Já?") é cortada no silêncio.
+
 ## v1.15.0 — efeito nunca cortado, zoom nunca interrompido e sotaque brasileiro
 - Efeito sonoro não é mais cortado no meio: o `edicao.py` da base do lote toca todo efeito inteiro, só deixa encurtar texturas contínuas (coração da contagem, vento, dominó, jato, regador, espuma, atrito) com fade longo, e recusa a edição se algum efeito passar do fim do vídeo ou se zoom/soco atravessar um corte. A música termina com fade de 1,2 s (`fade_out` novo no renderizador).
 - Quatro efeitos originais curtos (`criar_sfx_agua.py`), que terminam sozinhos: respingo (0,6 s), mergulho (1,4 s), bolhas (1,2 s) e trombone "wah wah" (2 s, agora o trombone padrão; o longo virou `trombone_longo`).
