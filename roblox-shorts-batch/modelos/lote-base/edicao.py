@@ -37,7 +37,8 @@ FX = {
     'apito': [CC + 'eem mp3-35.mp3'],
     'coracao': [CC + 'eem mp3-43.mp3'],
     'timpano': [CC + 'eem mp3-45.mp3'],
-    'trombone': [CC + 'eem mp3-37.mp3'],
+    'trombone': [OL + 'trombone-curto.mp3'],
+    'trombone_longo': [CC + 'eem mp3-37.mp3'],
     'engracado': [CC + 'eem mp3-60.mp3'],
     'aplausos': [CC + 'eem mp3-40.mp3', CC + 'eem mp3-54.mp3'],
     'sucesso': [OL + 'sucesso-original.mp3'],
@@ -58,13 +59,22 @@ FX = {
     'apito_sobe': [OL + 'apito-sobe.mp3'],
     'jato': [OL + 'jato-agua.mp3'],
     'regador': [OL + 'regador-gotas.mp3'],
+    # Água e fim curtos (criar_sfx_agua.py): tocam inteiros, sem precisar cortar.
+    'respingo': [OL + 'respingo-curto.mp3'],
+    'mergulho': [OL + 'mergulho.mp3'],
+    'bolhas': [OL + 'bolhas-curtas.mp3'],
+    'boing_curto': [OL + 'boing-original.mp3'],
 }
+# Só sons contínuos (texturas/loops) podem ser encurtados com 'dur', e sempre com fade longo. Os outros tocam
+# inteiros: efeito cortado no meio é proibido (o cliente reprovou).
+CORTAVEIS = {'coracao', 'domino', 'vento', 'jato', 'regador', 'espuma', 'escorregar'}
 GAIN = {'whoosh': -10, 'pop': -11, 'clique': -11, 'ding': -11, 'brilho': -12, 'impacto': -5, 'explosao': -7, 'soco': -7,
         'boing': -10, 'erro': -11, 'erro_curto': -11, 'apito': -12, 'coracao': -12, 'timpano': -9, 'trombone': -10,
         'engracado': -11, 'aplausos': -14, 'sucesso': -10, 'harpa': -12, 'pizzicato': -12, 'apito_desce': -13,
         'escorregar': -11, 'pum': -12, 'campainha': -12, 'grunhido': -12, 'bicho': -12,
         'domino': -15, 'onda': -9, 'espuma': -13, 'vento': -14,
-        'apito_sobe': -13, 'jato': -15, 'regador': -15}
+        'apito_sobe': -13, 'jato': -15, 'regador': -15, 'respingo': -10, 'mergulho': -8, 'bolhas': -13,
+        'trombone_longo': -10, 'boing_curto': -11}
 
 
 class Edicao:
@@ -84,6 +94,9 @@ class Edicao:
         self.fim = self.T['fim']
         self.S, self.E, self.O, self.captions, self.music = [], [], [], [], []
         self._uso = collections.Counter()
+        self.avisos = []
+        cat = json.loads((LIB / 'catalogo.json').read_text(encoding='utf-8'))
+        self.duracoes = {a['path']: float(a['duration_seconds']) for a in cat['assets']}
 
     def w(self, i, *alvos, n=0, fim=False):
         from comum import norm
@@ -98,21 +111,32 @@ class Edicao:
 
     # ---- áudio
     def sfx(self, cat, at, gain=None, dur=None, pitch=None):
+        """Efeito sonoro. Toca INTEIRO; 'dur' só vale para os sons contínuos de CORTAVEIS (com fade longo).
+        Efeito que não cabe até o fim do vídeo é erro (escrever() recusa): escolha um som mais curto ou adiante-o."""
         lista = FX[cat]
         i = self._uso[cat]
         self._uso[cat] += 1
         at = max(0.0, at)
-        row = {'file': lista[i % len(lista)], 'at': round(at, 3), 'gain_db': GAIN[cat] if gain is None else gain}
-        if dur:
-            row['duration'] = round(max(0.05, min(dur, self.fim - at - 0.02)), 3)
+        arquivo = lista[i % len(lista)]
+        inteiro = self.duracoes.get(arquivo, 0) / (pitch or 1)
+        row = {'file': arquivo, 'at': round(at, 3), 'gain_db': GAIN[cat] if gain is None else gain}
+        if dur and dur < inteiro - 0.02:
+            if cat in CORTAVEIS:
+                row['duration'] = round(max(0.05, dur), 3)
+                row['fade_out'] = round(min(0.6, max(0.25, dur * 0.4)), 3)
+                inteiro = dur
+            else:
+                self.avisos.append(f'{cat} em {at:.2f}s: dur={dur:.2f} ignorado, o som toca inteiro ({inteiro:.2f}s)')
         if pitch:
             row['pitch'] = pitch
+        if at + inteiro > self.fim - 0.02:
+            self.avisos.append(f'ERRO {cat} em {at:.2f}s ({inteiro:.2f}s) seria cortado pelo fim do vídeo ({self.fim:.2f}s)')
         if at < self.fim - 0.05:
             self.S.append(row)
         return row
 
     def musica(self, nome, gain=-24, at=0.0, duracao=None, offset=None):
-        row = {'file': f'musicas/curtos/{nome}', 'at': round(at, 3), 'gain_db': gain}
+        row = {'file': f'musicas/curtos/{nome}', 'at': round(at, 3), 'gain_db': gain, 'fade_out': 1.2}
         if duracao:
             row['duration'] = round(duracao, 3)
         if offset:
@@ -161,7 +185,22 @@ class Edicao:
                     c['saida'] = True
         return self.captions
 
+    def conferir(self):
+        """Recusa a edição com efeito cortado pelo fim do vídeo ou zoom/soco atravessando um corte de câmera."""
+        cortes = sorted(self.T['cortes']) + [self.fim]
+        for e in self.E:
+            if e['type'] in ('zoom', 'punch'):
+                prox = next((c for c in cortes if c > e['at'] + 0.01), self.fim)
+                if e['at'] + e['duration'] > prox + 0.02:
+                    self.avisos.append(f"ERRO {e['type']} em {e['at']:.2f}s ({e['duration']:.2f}s) atravessa o corte de {prox:.2f}s")
+        for a in self.avisos:
+            print('[edicao]', a)
+        erros = [a for a in self.avisos if a.startswith('ERRO')]
+        if erros:
+            raise SystemExit(f'{len(erros)} problema(s) na edição (acima): nada de efeito cortado no meio nem zoom cortado')
+
     def escrever(self):
+        self.conferir()
         if not self.captions:
             self.legendas()
         nome = self.roteiro['arquivo' if self.idioma == 'pt' else f'arquivo_{self.idioma}']

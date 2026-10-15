@@ -4169,6 +4169,80 @@
         "Drip",
         "Pour"
       ]
+    },
+    {
+      "path": "efeitos/originais-livres/respingo-curto.mp3",
+      "duration_seconds": 0.6,
+      "sha256": "97db1034ca5353339f623a48e93b142a98f75734ee1dfbb13649277e3cfc7e1e",
+      "bytes": 8520,
+      "type": "sfx",
+      "origin": "original procedural synthesis",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "peak_db": -0.9,
+      "category": "respingo",
+      "tags": [
+        "Splash",
+        "Water",
+        "Plop"
+      ]
+    },
+    {
+      "path": "efeitos/originais-livres/mergulho.mp3",
+      "duration_seconds": 1.4,
+      "sha256": "ed364c6ba8db88d704f1edc90c04f1d89bc7b6b60e596385fe7e5a100401ca12",
+      "bytes": 15013,
+      "type": "sfx",
+      "origin": "original procedural synthesis",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "peak_db": -0.9,
+      "category": "mergulho",
+      "tags": [
+        "Splash",
+        "Water",
+        "Dive",
+        "Fall"
+      ]
+    },
+    {
+      "path": "efeitos/originais-livres/bolhas-curtas.mp3",
+      "duration_seconds": 1.2,
+      "sha256": "a4507a540c679692d7e15dcb03d5511cf0cdb1afb78d9ba3ccb8e778dfbe225e",
+      "bytes": 23000,
+      "type": "sfx",
+      "origin": "original procedural synthesis",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "peak_db": -1.1,
+      "category": "bolhas",
+      "tags": [
+        "Bubbles",
+        "Underwater",
+        "Liquid"
+      ]
+    },
+    {
+      "path": "efeitos/originais-livres/trombone-curto.mp3",
+      "duration_seconds": 2.0,
+      "sha256": "fcf2d02eff0dd0e8f068e3a2f59964e34b485d182e835751344141d777102e7f",
+      "bytes": 12793,
+      "type": "sfx",
+      "origin": "original procedural synthesis",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "peak_db": -1.0,
+      "category": "trombone",
+      "tags": [
+        "Trombone",
+        "Fail",
+        "Cartoon",
+        "Sad"
+      ]
     }
   ]
 }

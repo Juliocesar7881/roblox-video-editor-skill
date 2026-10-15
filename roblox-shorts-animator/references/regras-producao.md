@@ -51,6 +51,9 @@ Regras do sistema do amigo do usuário, adaptadas a esta skill. Valem para todo 
 - Contador completo de 5 s depois de "Escolhe rápido!", com tique de relógio e música de puzzle durante a decisão; música animada na comemoração.
 - Efeito sonoro em toda ação (passo, pulo, whoosh, impacto, tombo), escolhido pelo acontecimento e com procedência registrada. Escorregar = som de atrito no plástico (`escorregar-trava`/`escorregar-rapido`), com o rangido/lançamento no instante exato da parada/saída.
 - Nenhum efeito por cima de fala: whoosh, rufar e buzzer terminam antes da palavra ou entram na pausa.
+- Nenhum efeito sonoro cortado no meio: todo efeito toca até o fim (sons curtos para momentos curtos); só texturas contínuas podem ser encurtadas, com fade longo. A música termina com fade de 1,2 s.
+- Nenhum travelling/zoom interrompido por corte: o movimento termina antes do próximo corte (`c.ate_corte`).
+- Voz sempre com sotaque brasileiro: `[Brazilian Portuguese accent]` no começo de cada fala do ElevenLabs.
 - Não impor corte a cada 1–2 s; mover a câmera quando a história pedir.
 
 ## Imagem

@@ -389,7 +389,10 @@ def main():
                         # SFX gain is the desired peak level: quiet and loud library files land alike.
                         gain -= allowed[file].get('peak_db', 0)
                     pitch = number(row.get('pitch', 1), 'pitch', lo=.5, hi=2)
-                    uses.append(dict(kind=kind, key=(kind, str(file), offset), file=file, at=at, offset=offset, length=length, gain=gain, pitch=pitch))
+                    # fade_out: seconds of fade at the end of a trimmed sound or of the music (default 0.15).
+                    fade = number(row.get('fade_out', .15), 'fade_out', lo=.005, hi=10)
+                    uses.append(dict(kind=kind, key=(kind, str(file), offset), file=file, at=at, offset=offset, length=length, gain=gain,
+                                     pitch=pitch, fade=fade))
             keys = list(dict.fromkeys(u['key'] for u in uses))
             counts = collections.Counter(u['key'] for u in uses)
             for idx, key in enumerate(keys, start=first):
@@ -412,7 +415,7 @@ def main():
                     chain += [f'asetrate={round(48000*u["pitch"])}', 'aresample=48000']
                 if u['length'] is not None:
                     chain += [f'atrim=duration={u["length"]}', 'asetpts=PTS-STARTPTS', f'volume={u["gain"]}dB',
-                              'afade=t=in:d=0.02', f'afade=t=out:st={max(0,u["length"]-.15)}:d=0.15']
+                              'afade=t=in:d=0.02', f'afade=t=out:st={max(0,u["length"]-min(u["fade"], u["length"]))}:d={min(u["fade"], u["length"])}']
                 else:
                     chain += ['asetpts=PTS-STARTPTS', f'volume={u["gain"]}dB', 'afade=t=in:d=0.005']
                 chain.append(f'adelay={round(u["at"]*1000)}:all=1')

@@ -1,5 +1,11 @@
 Skills de Roblox para Claude: edição de gameplay (`roblox-video-editor`) e **nova** criação de Shorts animados no Roblox Studio (`roblox-shorts-animator`).
 
+## v1.15.0 — efeito nunca cortado, zoom nunca interrompido e sotaque brasileiro
+- Efeito sonoro não é mais cortado no meio: o `edicao.py` da base do lote toca todo efeito inteiro, só deixa encurtar texturas contínuas (coração da contagem, vento, dominó, jato, regador, espuma, atrito) com fade longo, e recusa a edição se algum efeito passar do fim do vídeo ou se zoom/soco atravessar um corte. A música termina com fade de 1,2 s (`fade_out` novo no renderizador).
+- Quatro efeitos originais curtos (`criar_sfx_agua.py`), que terminam sozinhos: respingo (0,6 s), mergulho (1,4 s), bolhas (1,2 s) e trombone "wah wah" (2 s, agora o trombone padrão; o longo virou `trombone_longo`).
+- Travelling/zoom de câmera não é mais interrompido por corte: `c.ate_corte(t)` dá a duração até o próximo corte e o `escrever()` da cena recusa movimento cortado antes de terminar.
+- Voz com sotaque brasileiro: cada fala do ElevenLabs começa com `[Brazilian Portuguese accent]` (o site só tem "Português" genérico e às vezes saía sotaque espanhol).
+
 ## v1.14.0 — só português, 7 por lote às 09:00 no BRUNOBLOX e registro de roteiros
 - Todo Short agora sai só em português (o canal em espanhol foi abandonado): `scripts/fazer_short.py PROJETO` produz o MP4 final; `fazer_bilingue.py` virou apelido dele. Roteiro do modelo sem chaves `_es`.
 - `roblox-shorts-batch`: lote de 7 vídeos, agendados no BRUNOBLOX (@eibrunoruan), um por dia às 09:00 (Brasília) a partir do dia seguinte (`config.json`: `videos_por_lote`, `horarios`, `comecar_em`, canal, "não é para crianças", Jogos). `lote.py` com `novo`, `historico`, `produzir`, `registrar`, `metadados`, `painel`, `agenda`, `marcar` e `status`.

@@ -1788,6 +1788,54 @@
       "content_review": "instrumental",
       "distribution_allowed": true,
       "bundled_file": "assets/audio-original/regador-gotas.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/respingo-curto.mp3",
+      "duration_seconds": 0.6,
+      "sha256": "97db1034ca5353339f623a48e93b142a98f75734ee1dfbb13649277e3cfc7e1e",
+      "bytes": 8520,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/respingo-curto.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/mergulho.mp3",
+      "duration_seconds": 1.4,
+      "sha256": "ed364c6ba8db88d704f1edc90c04f1d89bc7b6b60e596385fe7e5a100401ca12",
+      "bytes": 15013,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/mergulho.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/bolhas-curtas.mp3",
+      "duration_seconds": 1.2,
+      "sha256": "a4507a540c679692d7e15dcb03d5511cf0cdb1afb78d9ba3ccb8e778dfbe225e",
+      "bytes": 23000,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/bolhas-curtas.mp3"
+    },
+    {
+      "path": "efeitos/originais-livres/trombone-curto.mp3",
+      "duration_seconds": 2.0,
+      "sha256": "fcf2d02eff0dd0e8f068e3a2f59964e34b485d182e835751344141d777102e7f",
+      "bytes": 12793,
+      "type": "sfx",
+      "license_status": "original-generated",
+      "commercial_allowed": true,
+      "content_review": "instrumental",
+      "distribution_allowed": true,
+      "bundled_file": "assets/audio-original/trombone-curto.mp3"
     }
   ],
   "license_notice": "Music CC BY 4.0: give credit and indicate edits. Original synthesized SFX have no required attribution."

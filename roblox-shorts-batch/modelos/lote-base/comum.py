@@ -87,7 +87,28 @@ class Cena:
         self.cortes.append(t)
         return t
 
+    def ate_corte(self, t, folga=0.05):
+        """Duração de um travelling/zoom que começa em t e termina antes do próximo corte (registre os cortes antes)."""
+        prox = min([c for c in self.cortes if c > t + 0.01] or [t + 99])
+        return round(max(0.2, prox - t - folga), 3)
+
+    def conferir_movimentos(self, fim):
+        """Recusa travelling de câmera (cam.mover / cam.rosto com t) que um corte interrompe antes de terminar."""
+        cortes = sorted(self.cortes) + [fim]
+        erros = []
+        for t, corpo in self.ev:
+            for dur in _duracoes_camera(corpo):
+                prox = next((c for c in cortes if c > t + 0.01), fim)
+                if t + dur > prox + 0.02:
+                    erros.append(f'travelling em {t:.2f}s dura {dur:.2f}s mas o corte vem em {prox:.2f}s '
+                                 f'(use c.ate_corte({t:.2f}) = {max(0.2, prox - t - 0.05):.2f})')
+        for e in erros:
+            print('[movimento]', e)
+        if erros:
+            raise SystemExit(f'{len(erros)} movimento(s) de câmera cortado(s) antes de terminar (acima)')
+
     def escrever(self, fim, lua_extra='', tempos=None):
+        self.conferir_movimentos(fim)
         if not self.a.estimado:
             from envelope_boca import envelope
             for f in self.falas:
@@ -105,6 +126,44 @@ class Cena:
         (self.proj / f'tempos{self.suf}.json').write_text(json.dumps(dados, indent=1, ensure_ascii=False), encoding='utf-8')
         print(json.dumps({k: (round(v, 2) if isinstance(v, float) else v) for k, v in dados.items() if k != 'falas'},
                          ensure_ascii=False))
+
+
+def _args(texto, ini):
+    """Argumentos de nível zero de uma chamada que começa em texto[ini] (logo depois do '(')."""
+    nivel, atual, args = 0, '', []
+    for ch in texto[ini:]:
+        if ch in '({[':
+            nivel += 1
+        elif ch in ')}]':
+            if nivel == 0:
+                args.append(atual.strip())
+                return args
+            nivel -= 1
+        if ch == ',' and nivel == 0:
+            args.append(atual.strip())
+            atual = ''
+        else:
+            atual += ch
+    return args
+
+
+def _duracoes_camera(corpo):
+    """Durações numéricas dos travellings de câmera num evento Luau (cam.mover 3º argumento, cam.rosto {t = ...})."""
+    out = []
+    for m in re.finditer(r'cam\.mover\(', corpo):
+        a = _args(corpo, m.end())
+        if len(a) >= 3:
+            try:
+                out.append(float(a[2]))
+            except ValueError:
+                pass
+    for m in re.finditer(r'cam\.rosto\(', corpo):
+        a = _args(corpo, m.end())
+        if len(a) >= 4:
+            t = re.search(r'(?<![A-Za-z_])t\s*=\s*([\d.]+)', a[3])
+            if t:
+                out.append(float(t.group(1)))
+    return out
 
 
 def montar_cenario(proj):

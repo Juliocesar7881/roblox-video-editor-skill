@@ -1,5 +1,10 @@
 # Validação antes da publicação
 
+## v1.15.0 (15 de outubro de 2026)
+
+- 34 testes passaram (novo: `test_no_cut_camera_moves_or_sounds`).
+- Short "Qual isca pesca o maior peixe?" refeito com as regras novas: nenhum efeito cortado (só o coração da contagem, com fade de 0,6 s, e a música, com fade de 1,2 s), todos os travellings terminando antes do corte, falas com `[Brazilian Portuguese accent]`; `[auditoria] total 0`, `[camera] total 0`, `[legenda] total 0`; −14,0 LUFS, pico −1,9 dBTP; Whisper 100% das falas.
+
 ## v1.14.0 (15 de outubro de 2026)
 
 - 33 testes passaram (`test_shorts_are_portuguese_only` substitui o antigo teste bilíngue).

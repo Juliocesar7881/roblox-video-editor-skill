@@ -331,6 +331,25 @@ class Animator(unittest.TestCase):
             self.assertIn(trecho, kit)
         self.assertNotIn('__mode', kit)  # tabelas fracas perdiam animacoes e poses no Roblox
 
+    def test_no_cut_camera_moves_or_sounds(self):
+        # Pedido do cliente (15/10/2026): travelling/zoom nunca cortado antes de terminar e efeito nunca cortado no meio.
+        base = ROOT / 'roblox-shorts-batch' / 'modelos' / 'lote-base'
+        sys.path.insert(0, str(base))
+        try:
+            import comum
+        finally:
+            sys.path.remove(str(base))
+        corpo = ('\t\tcam.corte(V(1, 2, 3), V(0, 1, 0), 50)\n\t\tcam.mover(V(-3, 6.2, -33), V(-1, -1.6, -20), 1.2, 48)\n'
+                 '\t\tcam.rosto(noob, 5.6, 44, {lado = 0.5, altura = 0.35, t = 0.7})')
+        self.assertEqual(comum._duracoes_camera(corpo), [1.2, 0.7])
+        edicao = (base / 'edicao.py').read_text(encoding='utf-8')
+        self.assertIn('CORTAVEIS', edicao)
+        self.assertIn('seria cortado pelo fim do vídeo', edicao)
+        self.assertIn('atravessa o corte', edicao)
+        for nome in ('respingo-curto', 'mergulho', 'bolhas-curtas', 'trombone-curto'):
+            self.assertTrue((ROOT / 'roblox-video-editor' / 'assets' / 'audio-original' / f'{nome}.mp3').exists())
+        self.assertIn('[Brazilian Portuguese accent]', (ANIM / 'SKILL.md').read_text(encoding='utf-8'))
+
 
 if __name__ == '__main__':
     unittest.main()
