@@ -1,9 +1,9 @@
-# Como criar as 10 ideias do lote
+# Como criar as 7 ideias do lote
 
-Cada lote tem **10 histórias inéditas**. Antes de escrever, rode `python scripts/lote.py historico` e leia todas as premissas que aparecem: nenhuma das 10 pode repetir premissa, objetivo, mecânica, sequência de tentativas ou reviravolta de um vídeo anterior, de um modelo da skill ou de outro vídeo do mesmo lote. Trocar cor, objeto, nome ou título da mesma brincadeira **não** é ideia nova.
+Cada lote tem **7 histórias inéditas** (uma por dia da semana). Antes de escrever, rode `python scripts/lote.py historico`: ele mostra o registro da skill ([roblox-shorts-animator/historico/roteiros.md](../../roblox-shorts-animator/historico/roteiros.md), com tudo o que já foi feito e o que o BRUNOBLOX já publicou por fora) e os roteiros de `entregas/`. Nenhuma das 7 pode repetir premissa, objetivo, mecânica, sequência de tentativas ou reviravolta de um vídeo anterior, de um modelo da skill ou de outro vídeo do mesmo lote. Trocar cor, objeto, nome ou título da mesma brincadeira **não** é ideia nova.
 
 ## O que todas têm em comum (o estilo da skill)
-- Noob R15 da skill, rosto do Short de referência, voz Roger em português e espanhol.
+- Noob R15 da skill, rosto do Short de referência, voz Roger em português (os Shorts saem só em português).
 - Gancho em até 2 s com uma pergunta ou situação absurda; falas curtas; 25–35 s.
 - Uma escolha com cortes secos nas opções e contagem 5-4-3-2-1 em boa parte dos vídeos (não em todos: varie).
 - Reviravolta boba e leve no fim. Humor físico, caretas, efeitos sonoros exagerados.
@@ -11,7 +11,7 @@ Cada lote tem **10 histórias inéditas**. Antes de escrever, rode `python scrip
 - Infantil: sem violência, sustos pesados, humilhação, palavrões, Robux grátis, links ou pedidos de dados; sem personagens, marcas ou músicas de terceiros.
 
 ## Variar dentro do lote
-Distribua os 10 vídeos por eixos diferentes. Não use o mesmo eixo mais de 2 vezes no lote:
+Distribua os 7 vídeos por eixos diferentes. Não repita eixo no mesmo lote:
 - **Clima e natureza**: chuva, vento, neve, arco-íris, vulcão de brinquedo.
 - **Comida e cozinha**: bolo gigante, pizza, sorvete que derrete, pipoca.
 - **Esporte e brincadeira**: chute a gol, basquete, pula-corda, esconde-esconde, cabo de guerra.
@@ -31,7 +31,7 @@ Formatos de história (alterne):
 5. Antes/depois: o noob faz algo e o resultado é exagerado.
 
 ## Registro
-Para cada vídeo, `originalidade.json` com `premissa`, `objetivo`, `mecanica`, `tentativas`, `reviravolta`, `projetos_comparados` e `diferenca_dos_anteriores`. Verifique de novo antes de gerar as vozes e antes de gravar.
+Para cada vídeo, `originalidade.json` com `premissa`, `objetivo`, `mecanica`, `tentativas`, `reviravolta`, `projetos_comparados` e `diferenca_dos_anteriores`. Verifique de novo antes de gerar as vozes e antes de gravar. Depois da produção, o `lote.py produzir` anota cada vídeo no registro (`registrar_roteiro.py`); confira que os 7 entraram.
 
 ## Cenas que a skill já faz bem (use para variar sem inventar mecânica impossível)
 Correr/andar (`K.mover`), cortes de lugar (`K.cortarPara`), escorregar (`K.deslizar`), voar/cair (`K.voar` + `K.deitado`), gesto com as mãos (`K.sixSeven`), objetos voando com tween, partículas (chuva, brilho, confete), portas/placas/medidores com SurfaceGui, caretas (`K.rosto`). Uma ideia que precisa de algo novo (nadar, dirigir de verdade) custa muito mais tempo de cena: prefira representar com cortes e objetos.

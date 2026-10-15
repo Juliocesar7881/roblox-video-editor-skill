@@ -1,5 +1,11 @@
 # Validação antes da publicação
 
+## v1.14.0 (15 de outubro de 2026)
+
+- 33 testes passaram (`test_shorts_are_portuguese_only` substitui o antigo teste bilíngue).
+- Agendamento real no BRUNOBLOX pelo YouTube Studio no Chrome: os 10 Shorts em português do lote de 14/10 enviados pelo `servidor_envio.py`, com título, descrição e 17 tags conferidos em cada um, "não é para crianças" e um por dia de 16 a 25/10/2026 às 09:00 (GMT-03:00). Na lista de conteúdo os 10 aparecem como Scheduled nas datas certas; a hora foi conferida na Visibility de 01–05 e 08 e na janela "Video scheduled" de 06–10.
+- Armadilha encontrada e corrigida no 05: com a hora digitada o Studio salvou 00:00; corrigido pela Visibility do vídeo e, dali em diante, a hora passou a ser escolhida clicando na opção "09:00".
+
 ## v1.13.0 (15 de outubro de 2026)
 
 - 33 testes passaram (biblioteca agora com 204 arquivos no catálogo e 89 no manifesto público, contando os 7 efeitos originais novos com hash conferido).

@@ -1,15 +1,15 @@
 {
-  "videos_por_lote": 10,
-  "horarios": ["12:15", "17:15"],
+  "videos_por_lote": 7,
+  "horarios": ["09:00"],
   "fuso": "America/Sao_Paulo",
-  "dias": 5,
   "comecar_em": "amanha",
-  "canais": {
-    "pt": {"nome": "", "idioma_video": "Português", "descricao": "canal em português"},
-    "es": {"nome": "", "idioma_video": "Español (Latinoamérica)", "descricao": "canal em espanhol"}
+  "canal": {
+    "nome": "BRUNOBLOX",
+    "handle": "@eibrunoruan",
+    "idioma_video": "Português (Brasil)"
   },
-  "feito_para_criancas": true,
-  "categoria": "Entretenimento",
+  "feito_para_criancas": false,
+  "categoria": "Jogos",
   "pasta_entregas": "~/Documents/entregas",
   "pastas_historico": ["~/Documents/entregas", "~/Documents/Skill videos roblox/entregas"]
 }

@@ -1,21 +1,29 @@
-# Título, descrição e tags (YouTube Shorts)
+# Título, descrição e tags com SEO (YouTube Shorts, canal BRUNOBLOX)
 
-Escreva no `roteiro.json` de cada vídeo, nos dois idiomas:
+Escreva no `roteiro.json` de cada vídeo. O padrão vem dos Shorts que mais deram visualização no BRUNOBLOX
+(confira de novo no Studio de vez em quando: Conteúdo → Shorts, ordene por visualizações):
 
-| campo | português | espanhol | regra |
-|---|---|---|---|
-| título | `titulo_youtube` (ou `titulo`) | `titulo_youtube_es` (ou `titulo_es`) | até ~60 caracteres antes do `#shorts` (o script acrescenta), com 1–2 emojis; pergunta ou exclamação curiosa; sem clickbait falso |
-| descrição | `descricao` | `descricao_es` | 2–3 frases: o que acontece (sem contar o final) + pergunta para comentar |
-| hashtags | `hashtags` | `hashtags_es` | 3–5, a primeira `#shorts`; ex.: `#roblox #robloxbrasil #noob` / `#roblox #robloxespañol #noob` |
-| tags | `tags` | `tags_es` | 10–15 tags: tema do vídeo, `roblox`, `noob`, `shorts`, `desenho animado`, `infantil`, nome dos objetos; o script corta em ~480 caracteres |
+- "QUAL TSUNAMI VAI ME PEGAR?! 🌊😂 #Shorts" (27 mil), "O BACON ROUBOU O OVO PROIBIDO! 🥚😱" (27 mil),
+  "NÃO PISE NA COR ERRADA NO ROBLOX! 😱🌈" (26 mil), "QUAL ESCORREGADOR É O MAIS RÁPIDO?" (26 mil),
+  "O CHÃO VIROU LAVA NO ROBLOX!" (15 mil), "APERTEI OS 5 BOTÕES DO ROBLOX… DEU RUIM! 😱" (10 mil).
 
-O espanhol é latino neutro (`farmear`, `paraguas`, `impermeable`), não tradução palavra por palavra: título e descrição precisam soar naturais para uma criança do México ou da Argentina.
+| campo | onde | regra |
+|---|---|---|
+| título | `titulo_youtube` | CAIXA ALTA; a palavra-chave **ROBLOX** no título ("... NO ROBLOX?!", "... DO ROBLOX… DEU RUIM!"); pergunta ou exclamação curiosa ("QUAL...?!", "QUANTOS...?!", "... DEU RUIM!"); 2 emojis; termine com `#shorts #roblox`; até ~70 caracteres antes das hashtags (máx. 100 no total); sem clickbait falso (o vídeo tem que entregar o que o título promete) |
+| descrição | `descricao` | 1ª linha = gancho com as opções/tentativas e emojis (é o que aparece no feed); 2ª = o que acontece sem contar o final, com "Roblox" e "Noob" escritos; 3ª = pergunta para comentar ("Comenta qual você escolheria! 👇"); 4ª = "Se inscreve no BRUNOBLOX pra ver um vídeo novo de Roblox todo dia! 🔔". Sem links. |
+| hashtags | `hashtags` | `#Roblox #Shorts #Noob #RobloxBrasil` + 1 do tema (ex.: `#CasteloDeAreia`) |
+| tags | `tags` | 15–20: amplas (`roblox`, `roblox shorts`, `roblox brasil`, `roblox português`, `noob`, `noob roblox`, `roblox engraçado`, `humor roblox`, `animação roblox`, `shorts`) + 6–8 do tema (o que a pessoa digitaria: "castelo de areia", "qual castelo aguenta a onda", "onda gigante"...) + `desafio roblox`. O script corta em ~480 caracteres |
 
-`python scripts/lote.py metadados LOTE` monta `publicacao-pt.json` / `publicacao-es.json` (e os `.txt`) com:
-- título + `#shorts`;
-- descrição + hashtags + créditos da música (lidos de `final-*/…-creditos.txt`, gerados pelo renderizador) + "Voz: ElevenLabs (voz Roger)";
+`python scripts/lote.py metadados LOTE` monta `publicacao.json` e `publicacao.txt` com:
+- título (+ `#shorts #roblox` se faltar);
+- descrição + hashtags + créditos da música (lidos de `final-pt/…-creditos.txt`, gerados pelo renderizador; a licença
+  CC BY exige o crédito) + "Voz: ElevenLabs (voz Roger)";
 - tags validadas (sem `<` `>`, sem repetir, dentro do limite);
-- `feito_para_criancas: true` e a categoria do `config.json`.
-O comando sai com erro (e lista o que falta) se faltar MP4, descrição, créditos ou tags, ou se o título passar de 100 caracteres.
+- público, categoria e idioma do `config.json`: **não é conteúdo para crianças** (como os outros Shorts do canal;
+  decisão do dono em 15/10/2026), categoria **Jogos** (no Studio em inglês: Gaming), idioma **Português (Brasil)**.
+O comando sai com erro (e lista o que falta) se faltar MP4, descrição, créditos, "ROBLOX" no título, se houver menos
+de 12 tags ou se o título passar de 100 caracteres.
+
+A thumbnail **não** é feita pela skill: o dono do canal coloca depois.
 
 Uso comercial da voz do ElevenLabs exige plano pago na conta usada: deixe isso claro para o usuário, sem insistir.

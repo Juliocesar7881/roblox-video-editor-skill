@@ -36,7 +36,7 @@ Regras do sistema do amigo do usuário, adaptadas a esta skill. Valem para todo 
 5. Consequência: cai com gravidade real; nada de flutuar parado depois do impacto.
 
 ## Fala, voz e continuidade
-- Todo Short sai em português E espanhol, com a mesma voz Roger (só o idioma muda nas configurações do ElevenLabs). A versão em espanhol é gravada de novo com os tempos das falas em espanhol (boca, cortes e legendas no tempo certo), nunca dublada por cima do vídeo em português.
+- Todo Short sai só em português (o canal em espanhol foi abandonado em 15/10/2026), com a voz Roger.
 - Voz do Noob: Roger padrão do ElevenLabs (ID `CwhRBWXzGAHq8TQ4Fs17`), idioma **Portuguese** confirmado nas configurações antes de gerar; conferir o ID, não só o nome (existe outro "Roger").
 - A fala de intenção vem antes da ação; a reação começa no acontecimento (grito quando o monstro aparece, dano no contato).
 - Sem gagueira nem sotaque estrangeiro: corrigir o áudio de origem; a legenda certa não conserta uma fala errada.
